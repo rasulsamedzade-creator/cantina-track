@@ -388,6 +388,7 @@ const TRANSLATIONS = {
     totalRecords: "total records", thisLogbook: "this logbook", inPipeline: "in pipeline",
     harvestData: "Harvest Data", productionTimeline: "Production Timeline",
     kgHarvested: "Kg Harvested", brix: "Brix °", ph: "pH",
+    fermentationEnd: "Fermentation End", agingStart: "Aging Start",
     agingVessel: "Aging Vessel", expectedBottling: "Expected Bottling",
     noHarvestsYet: "No harvests logged yet",
     back: "← Back",
@@ -439,10 +440,15 @@ const TRANSLATIONS = {
     bottlesShippedCountry: "Bottles Shipped by Country", countryDistribution: "Country Distribution",
     revenueByCountry: "Revenue by Country", pricingTierBreakdown: "Pricing Tier Breakdown",
     ready: "Ready", lowStock: "Low Stock", aging: "Aging",
-    paid: "Paid", activeOverdueReorder: "Overdue for reorder", inactive: "Inactive",
+    paid: "Paid", draft: "Draft", activeOverdueReorder: "Overdue for reorder", inactive: "Inactive",
     euClients: "EU clients", exportClients: "Export clients",
     writeOffs: "Write-offs", inStock: "in stock", totalActive: "total active",
     bottlesInLots: "bottles in lots",
+    harvestLabel: "Harvest", inProgress: "In progress", backToHarvestLog: "← Back to Harvest Log", backToClients: "← Back to Clients",
+    contact: "Contact", vatRegime: "VAT Regime", issued: "Issued", ref: "Ref",
+    batchBelowMin: "below minimum stock", clientOverdueReorder: "overdue for reorder",
+    overdueFollowUp: "Last order was {0} days ago — this client is overdue for follow-up.", dueIn: "Due in",
+    bottles: "Bottles", all: "All",
   },
   it: {
     dashboard: "Pannello", batches: "Lotti", transactions: "Movimenti",
@@ -488,6 +494,7 @@ const TRANSLATIONS = {
     totalRecords: "registri totali", thisLogbook: "questo registro", inPipeline: "in lavorazione",
     harvestData: "Dati Vendemmia", productionTimeline: "Cronologia Produzione",
     kgHarvested: "Kg Raccolti", brix: "Brix °", ph: "pH",
+    fermentationEnd: "Fine Fermentazione", agingStart: "Inizio Invecchiamento",
     agingVessel: "Recipiente Invecchiamento", expectedBottling: "Imbottigliamento Previsto",
     noHarvestsYet: "Nessuna vendemmia registrata",
     back: "← Indietro",
@@ -535,79 +542,85 @@ const TRANSLATIONS = {
     bottlesShippedCountry: "Bottiglie Spedite per Paese", countryDistribution: "Distribuzione per Paese",
     revenueByCountry: "Entrate per Paese", pricingTierBreakdown: "Ripartizione Fasce di Prezzo",
     ready: "Pronto", lowStock: "Scorte Basse", aging: "Invecchiamento",
-    paid: "Pagata", activeOverdueReorder: "Riordino in ritardo", inactive: "Inattivo",
+    paid: "Pagata", draft: "Bozza", activeOverdueReorder: "Riordino in ritardo", inactive: "Inattivo",
     euClients: "Clienti UE", exportClients: "Clienti Export",
     writeOffs: "Scarichi", inStock: "in magazzino", totalActive: "totali attivi",
     bottlesInLots: "bottiglie nei lotti",
+    harvestLabel: "Vendemmia", inProgress: "In corso", backToHarvestLog: "← Indietro al Registro Vendemmia", backToClients: "← Indietro ai Clienti",
+    contact: "Contatto", vatRegime: "Regime IVA", issued: "Emessa", ref: "Rif.",
+    batchBelowMin: "sotto scorta minima", clientOverdueReorder: "in ritardo per riordino",
+    overdueFollowUp: "Ultimo ordine {0} giorni fa — questo cliente è in ritardo per il follow-up.", dueIn: "Scadenza tra",
+    bottles: "Bottiglie", all: "Tutti",
   }
 };
 
-function computeReminders(clients) {
+function computeReminders(clients, t) {
+  const _t = t || (k => k);
   return clients.map(c => {
     const days = daysSince(c.lastOrder);
     const overdueDays = days - c.reorderIntervalDays;
     const pct = Math.min(days / c.reorderIntervalDays, 2);
-    let urgency = "green", label = "On track";
-    if (overdueDays > 14) { urgency = "red"; label = `${overdueDays}d overdue`; }
-    else if (overdueDays > 0) { urgency = "gold"; label = `${overdueDays}d overdue`; }
-    else if (pct > 0.8) { urgency = "gold"; label = `Due in ${c.reorderIntervalDays - days}d`; }
+    let urgency = "green", label = _t("onTrack");
+    if (overdueDays > 14) { urgency = "red"; label = `${overdueDays}d ${_t("overdue")}`; }
+    else if (overdueDays > 0) { urgency = "gold"; label = `${overdueDays}d ${_t("overdue")}`; }
+    else if (pct > 0.8) { urgency = "gold"; label = `${_t("dueIn")} ${c.reorderIntervalDays - days}d`; }
     return { ...c, daysSince: days, overdueDays, urgency, label, pct };
   }).sort((a,b)=>b.overdueDays-a.overdueDays);
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
-function Dashboard({ batches, transactions, clients, invoices, harvests, onNav }) {
+function Dashboard({ batches, transactions, clients, invoices, harvests, onNav, t }) {
   const totalBottles = batches.reduce((s,b)=>s+b.qty,0);
   const lowStock = batches.filter(b=>b.qty<300).length;
   const overdueClients = clients.filter(c=>c.status==="Overdue").length;
-  const recentOut = transactions.filter(t=>t.type==="out").reduce((s,t)=>s+Math.abs(t.qty),0);
+  const recentOut = transactions.filter(tx=>tx.type==="out").reduce((s,tx)=>s+Math.abs(tx.qty),0);
   const pendingInvoicesAmt = invoices.filter(i=>i.status==="Pending").reduce((s,i)=>s+i.qty*i.unitPrice,0);
 
   return (
     <>
-      <div className="page-header"><div className="page-header-left"><h2>Cantina Overview</h2><p>DASHBOARD — {new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}).toUpperCase()}</p></div></div>
-      {(lowStock>0||overdueClients>0) && <div className="alert">{lowStock>0&&`⚠ ${lowStock} batch${lowStock>1?"es":""} below minimum stock.`}{lowStock>0&&overdueClients>0&&"  ·  "}{overdueClients>0&&`⚠ ${overdueClients} client${overdueClients>1?"s":""} overdue for reorder.`}</div>}
+      <div className="page-header"><div className="page-header-left"><h2>{t("cantinaOverview")}</h2><p>{t("dashboardSub")} — {new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}).toUpperCase()}</p></div></div>
+      {(lowStock>0||overdueClients>0) && <div className="alert">{lowStock>0&&`⚠ ${lowStock} batch${lowStock>1?"es":""} ${t("batchBelowMin")}.`}{lowStock>0&&overdueClients>0&&"  ·  "}{overdueClients>0&&`⚠ ${overdueClients} client${overdueClients>1?"s":""} ${t("clientOverdueReorder")}.`}</div>}
       <div className="stats-grid">
-        <div className="stat-card"><div className="stat-label">Total Bottles</div><div className="stat-value">{totalBottles.toLocaleString()}</div><div className="stat-sub">{batches.length} active lots</div></div>
-        <div className="stat-card green"><div className="stat-label">Active Clients</div><div className="stat-value">{clients.filter(c=>c.status!=="Inactive").length}</div><div className="stat-sub">{clients.length} total accounts</div></div>
-        <div className="stat-card gold"><div className="stat-label">Pending Revenue</div><div className="stat-value" style={{fontSize:"1.4rem",marginTop:4}}>{fmtMoney(pendingInvoicesAmt)}</div><div className="stat-sub">{invoices.filter(i=>i.status==="Pending").length} open invoices</div></div>
-        <div className="stat-card danger"><div className="stat-label">Alerts</div><div className="stat-value">{lowStock+overdueClients}</div><div className="stat-sub">stock + client</div></div>
+        <div className="stat-card"><div className="stat-label">{t("totalBottles")}</div><div className="stat-value">{totalBottles.toLocaleString()}</div><div className="stat-sub">{batches.length} {t("activeLots")}</div></div>
+        <div className="stat-card green"><div className="stat-label">{t("activeClients")}</div><div className="stat-value">{clients.filter(c=>c.status!=="Inactive").length}</div><div className="stat-sub">{clients.length} {t("totalAccounts")}</div></div>
+        <div className="stat-card gold"><div className="stat-label">{t("pendingRevenue")}</div><div className="stat-value" style={{fontSize:"1.4rem",marginTop:4}}>{fmtMoney(pendingInvoicesAmt)}</div><div className="stat-sub">{invoices.filter(i=>i.status==="Pending").length} {t("openInvoices")}</div></div>
+        <div className="stat-card danger"><div className="stat-label">{t("alerts")}</div><div className="stat-value">{lowStock+overdueClients}</div><div className="stat-sub">{t("stockClient")}</div></div>
       </div>
       <div className="two-col">
         <div>
-          <div className="section-title">Recent Transactions</div>
+          <div className="section-title">{t("recentTransactions")}</div>
           <div className="table-wrap">
             {transactions.slice(0,5).map(tx=>{
               const {cls,icon}=txIcon(tx.type);
               return <div className="tx-item" key={tx.id}><div className={`tx-icon ${cls}`}>{icon}</div><div className="tx-info"><div className="tx-title">{tx.wine}{tx.clientName&&<span className="text-muted"> → {tx.clientName}</span>}</div><div className="tx-meta">{tx.batch} · {tx.date}</div></div>{tx.qty!==0&&<div className={`tx-qty ${tx.qty>0?"pos":"neg"}`}>{tx.qty>0?"+":""}{tx.qty}</div>}</div>;
             })}
           </div>
-          <div className="section-title">Recent Invoices <button className="btn btn-ghost btn-sm" onClick={()=>onNav("invoices")}>View All</button></div>
+          <div className="section-title">{t("recentInvoices")} <button className="btn btn-ghost btn-sm" onClick={()=>onNav("invoices")}>{t("viewAll")}</button></div>
           <div className="table-wrap">
             {invoices.slice(0,4).map(inv=>(
               <div className="tx-item" key={inv.id}>
-                <div className="tx-info"><div className="tx-title">{inv.clientName} <span className="text-muted">— {inv.wine}</span></div><div className="tx-meta">{inv.id} · {inv.qty} btl · Due {inv.dueDate}</div></div>
+                <div className="tx-info"><div className="tx-title">{inv.clientName} <span className="text-muted">— {inv.wine}</span></div><div className="tx-meta">{inv.id} · {inv.qty} btl · {t("due")} {inv.dueDate}</div></div>
                 <div style={{display:"flex",alignItems:"center",gap:10}}><span className={`badge ${invoiceStatusColor(inv.status)}`}>{inv.status}</span><span style={{fontFamily:"var(--font-mono)",fontSize:".82rem"}}>{fmtMoney(inv.qty*inv.unitPrice)}</span></div>
               </div>
             ))}
           </div>
         </div>
         <div>
-          <div className="section-title">Reorder Reminders <button className="btn btn-ghost btn-sm" onClick={()=>onNav("reminders")}>View All</button></div>
-          {computeReminders(clients).slice(0,4).map(c=>(
+          <div className="section-title">{t("reorderReminders")} <button className="btn btn-ghost btn-sm" onClick={()=>onNav("reminders")}>{t("viewAll")}</button></div>
+          {computeReminders(clients, t).slice(0,4).map(c=>(
             <div className={`reminder-card ${c.urgency==="red"?"urgent":c.urgency==="gold"?"warning":""}`} key={c.id}>
               <div className={`reminder-urgency urgency-${c.urgency}`}/>
-              <div className="reminder-info"><div className="reminder-client">{c.name}</div><div className="reminder-detail">{c.label} · {c.daysSince}d since last order · {c.type}</div></div>
+              <div className="reminder-info"><div className="reminder-client">{c.name}</div><div className="reminder-detail">{c.label} · {c.daysSince}d {t("daysSinceOrder").toLowerCase()} · {c.type}</div></div>
               <div className="reminder-days" style={{color:c.urgency==="red"?"#e08080":c.urgency==="gold"?"var(--gold)":"#7ec494"}}>{c.daysSince}d</div>
             </div>
           ))}
-          <div className="section-title" style={{marginTop:8}}>Harvest Activity <button className="btn btn-ghost btn-sm" onClick={()=>onNav("harvest")}>View All</button></div>
+          <div className="section-title" style={{marginTop:8}}>{t("harvestActivity")} <button className="btn btn-ghost btn-sm" onClick={()=>onNav("harvest")}>{t("viewAll")}</button></div>
           <div className="table-wrap">
             {harvests.length === 0 ? (
-              <div className="empty" style={{padding:20}}>No harvests yet. Log your first harvest from Harvest Log.</div>
+              <div className="empty" style={{padding:20}}>{t("noHarvests")}</div>
             ) : harvests.slice(0,3).map(h=>(
               <div className="tx-item" key={h.id}>
-                <div className="tx-info"><div className="tx-title">{h.grape} <span className="text-muted">— {h.plot}</span></div><div className="tx-meta">{h.vintage} · Harvest {h.harvestDate} · {h.kgHarvested.toLocaleString()}kg</div></div>
+                <div className="tx-info"><div className="tx-title">{h.grape} <span className="text-muted">— {h.plot}</span></div><div className="tx-meta">{h.vintage} · {t("harvestLabel")} {h.harvestDate} · {h.kgHarvested.toLocaleString()}kg</div></div>
                 <span className={`badge ${harvestStageColor(h.stage)}`}>{h.stage}</span>
               </div>
             ))}
@@ -619,22 +632,22 @@ function Dashboard({ batches, transactions, clients, invoices, harvests, onNav }
 }
 
 // ── Inventory ─────────────────────────────────────────────────────────────────
-function Inventory({ batches, onAdd, onTransaction }) {
+function Inventory({ batches, onAdd, onTransaction, t }) {
   const [search,setSearch]=useState(""); const [ft,setFt]=useState("All");
   const filtered=batches.filter(b=>(ft==="All"||b.type===ft)&&(b.wine.toLowerCase().includes(search.toLowerCase())||b.id.toLowerCase().includes(search.toLowerCase())));
   return (
     <>
-      <div className="page-header"><div className="page-header-left"><h2>Batch Inventory</h2><p>ALL LOTS — BOTTLE STOCK BY BATCH</p></div></div>
+      <div className="page-header"><div className="page-header-left"><h2>{t("batchInventory")}</h2><p>{t("allLotsSub")}</p></div></div>
       <div className="search-bar">
-        <input placeholder="Search by wine or lot ID…" value={search} onChange={e=>setSearch(e.target.value)}/>
+        <input placeholder={t("searchBatches")} value={search} onChange={e=>setSearch(e.target.value)}/>
         <select style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:6,padding:"9px 13px",color:"var(--cream)",fontFamily:"var(--font-serif)",fontSize:".92rem",outline:"none"}} value={ft} onChange={e=>setFt(e.target.value)}>
-          {["All","Red","White","Rosé","Sparkling"].map(t=><option key={t}>{t}</option>)}
+          {["All","Red","White","Rosé","Sparkling"].map(typ=><option key={typ} value={typ}>{typ==="All"?t("all"):typ}</option>)}
         </select>
-        <button className="btn btn-gold" onClick={onAdd}>+ New Batch</button>
+        <button className="btn btn-gold" onClick={onAdd}>{t("newBatch")}</button>
       </div>
       <div className="table-wrap">
-        <table><thead><tr><th>Lot ID</th><th>Wine</th><th>Type</th><th>Vintage</th><th>Location</th><th>Bottles</th><th>Status</th><th>QR</th><th></th></tr></thead>
-          <tbody>{filtered.length===0?<tr><td colSpan={9}><div className="empty">No batches found</div></td></tr>:filtered.map(b=>(
+        <table><thead><tr><th>{t("lotId")}</th><th>{t("wine")}</th><th>{t("type")}</th><th>{t("vintage")}</th><th>{t("location")}</th><th>{t("bottles")}</th><th>{t("status")}</th><th>{t("qr")}</th><th></th></tr></thead>
+          <tbody>{filtered.length===0?<tr><td colSpan={9}><div className="empty">{t("noBatches")}</div></td></tr>:filtered.map(b=>(
             <tr key={b.id}>
               <td><span style={{fontFamily:"var(--font-mono)",fontSize:".72rem",color:"var(--muted)"}}>{b.id}</span></td>
               <td><div>{b.wine}</div><div style={{fontFamily:"var(--font-mono)",fontSize:".58rem",color:"var(--muted)",marginTop:2}}>{b.grapes}</div></td>
@@ -644,7 +657,7 @@ function Inventory({ batches, onAdd, onTransaction }) {
               <td style={{fontFamily:"var(--font-mono)",fontSize:"1rem"}}>{b.qty.toLocaleString()}</td>
               <td><span className={`badge ${statusColor(b.status)}`}>{b.status}</span></td>
               <td><QRBox id={b.id}/></td>
-              <td><button className="btn btn-ghost btn-sm" onClick={()=>onTransaction(b)}>Ship</button></td>
+              <td><button className="btn btn-ghost btn-sm" onClick={()=>onTransaction(b)}>{t("ship")}</button></td>
             </tr>
           ))}</tbody>
         </table>
@@ -654,10 +667,10 @@ function Inventory({ batches, onAdd, onTransaction }) {
 }
 
 // ── Transactions ──────────────────────────────────────────────────────────────
-function Transactions({ transactions }) {
+function Transactions({ transactions, t }) {
   return (
     <>
-      <div className="page-header"><div className="page-header-left"><h2>Transaction Log</h2><p>FULL AUDIT TRAIL</p></div></div>
+      <div className="page-header"><div className="page-header-left"><h2>{t("transactionLog")}</h2><p>{t("auditTrail")}</p></div></div>
       <div className="table-wrap">
         {transactions.map(tx=>{const {cls,icon}=txIcon(tx.type);return(
           <div className="tx-item" key={tx.id}>
@@ -672,24 +685,24 @@ function Transactions({ transactions }) {
 }
 
 // ── Invoices Page ─────────────────────────────────────────────────────────────
-function Invoices({ invoices, clients, onMarkPaid, onView }) {
+function Invoices({ invoices, clients, onMarkPaid, onView, t }) {
   const [search,setSearch]=useState("");
   const filtered=invoices.filter(i=>i.clientName.toLowerCase().includes(search.toLowerCase())||i.id.toLowerCase().includes(search.toLowerCase()));
   const totalRevenue=invoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.qty*i.unitPrice,0);
   const pendingAmt=invoices.filter(i=>i.status==="Pending").reduce((s,i)=>s+i.qty*i.unitPrice,0);
   return (
     <>
-      <div className="page-header"><div className="page-header-left"><h2>Invoices</h2><p>BILLING — REVENUE TRACKING</p></div></div>
+      <div className="page-header"><div className="page-header-left"><h2>{t("invoices")}</h2><p>{t("billingSub")}</p></div></div>
       <div className="stats-grid-3">
-        <div className="stat-card green"><div className="stat-label">Paid Revenue</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{fmtMoney(totalRevenue)}</div><div className="stat-sub">{invoices.filter(i=>i.status==="Paid").length} invoices</div></div>
-        <div className="stat-card gold"><div className="stat-label">Outstanding</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{fmtMoney(pendingAmt)}</div><div className="stat-sub">{invoices.filter(i=>i.status==="Pending").length} pending</div></div>
-        <div className="stat-card"><div className="stat-label">Total Invoiced</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{fmtMoney(totalRevenue+pendingAmt)}</div><div className="stat-sub">all time</div></div>
+        <div className="stat-card green"><div className="stat-label">{t("paidRevenue")}</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{fmtMoney(totalRevenue)}</div><div className="stat-sub">{invoices.filter(i=>i.status==="Paid").length} {t("invoices").toLowerCase()}</div></div>
+        <div className="stat-card gold"><div className="stat-label">{t("outstanding")}</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{fmtMoney(pendingAmt)}</div><div className="stat-sub">{invoices.filter(i=>i.status==="Pending").length} {t("pending")}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("totalInvoiced")}</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{fmtMoney(totalRevenue+pendingAmt)}</div><div className="stat-sub">{t("allTime")}</div></div>
       </div>
-      <div className="search-bar"><input placeholder="Search by client or invoice number…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
+      <div className="search-bar"><input placeholder={t("searchInvoices")} value={search} onChange={e=>setSearch(e.target.value)}/></div>
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Invoice #</th><th>Client</th><th>Wine</th><th>Qty</th><th>Amount</th><th>Date</th><th>Due</th><th>Status</th><th></th></tr></thead>
-          <tbody>{filtered.length===0?<tr><td colSpan={9}><div className="empty">No invoices found</div></td></tr>:filtered.map(inv=>(
+          <thead><tr><th>{t("invoiceNum")}</th><th>{t("client")}</th><th>{t("wine")}</th><th>{t("qty")}</th><th>{t("amount")}</th><th>{t("date")}</th><th>{t("due")}</th><th>{t("status")}</th><th></th></tr></thead>
+          <tbody>{filtered.length===0?<tr><td colSpan={9}><div className="empty">{t("noInvoices")}</div></td></tr>:filtered.map(inv=>(
             <tr key={inv.id}>
               <td><span style={{fontFamily:"var(--font-mono)",fontSize:".72rem",color:"var(--muted)"}}>{inv.id}</span></td>
               <td>{inv.clientName}</td>
@@ -700,8 +713,8 @@ function Invoices({ invoices, clients, onMarkPaid, onView }) {
               <td style={{fontFamily:"var(--font-mono)",fontSize:".75rem",color:inv.status==="Pending"&&daysSince(inv.dueDate)>0?"#e08080":"var(--muted)"}}>{inv.dueDate}</td>
               <td><span className={`badge ${invoiceStatusColor(inv.status)}`}>{inv.status}</span></td>
               <td style={{display:"flex",gap:6}}>
-                <button className="btn btn-ghost btn-sm" onClick={()=>onView(inv)}>View</button>
-                {inv.status==="Pending"&&<button className="btn btn-green btn-sm" onClick={()=>onMarkPaid(inv.id)}>Mark Paid</button>}
+                <button className="btn btn-ghost btn-sm" onClick={()=>onView(inv)}>{t("view")}</button>
+                {inv.status==="Pending"&&<button className="btn btn-green btn-sm" onClick={()=>onMarkPaid(inv.id)}>{t("markPaid")}</button>}
               </td>
             </tr>
           ))}</tbody>
@@ -712,37 +725,37 @@ function Invoices({ invoices, clients, onMarkPaid, onView }) {
 }
 
 // ── Invoice Preview Modal ─────────────────────────────────────────────────────
-function InvoiceModal({ invoice, onClose }) {
+function InvoiceModal({ invoice, onClose, t }) {
   const subtotal=invoice.qty*invoice.unitPrice;
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal modal-wide">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <h3 style={{margin:0}}>{invoice.id}</h3>
-          <div style={{display:"flex",gap:8}}><button className="btn btn-ghost btn-sm" onClick={onClose}>Close</button></div>
+          <div style={{display:"flex",gap:8}}><button className="btn btn-ghost btn-sm" onClick={onClose}>{t("close")}</button></div>
         </div>
         <div className="invoice-preview">
           <div className="inv-header">
             <div><div className="inv-winery-name">CANTINA TRACK</div><div className="inv-winery-sub">Via della Vigna 14 · Siena, Italy · VAT IT12345678</div></div>
-            <div className="inv-number"><div className="num">{invoice.id}</div><div className="dt">Issued: {invoice.date}</div><div className="dt">Due: {invoice.dueDate}</div></div>
+            <div className="inv-number"><div className="num">{invoice.id}</div><div className="dt">{t("issued")}: {invoice.date}</div><div className="dt">{t("due")}: {invoice.dueDate}</div></div>
           </div>
           <div className="inv-parties">
-            <div><div className="inv-party-label">From</div><div className="inv-party-name">Cantina Track SRL</div><div className="inv-party-detail">Via della Vigna 14<br/>53100 Siena, Italy<br/>VAT: IT12345678</div></div>
-            <div><div className="inv-party-label">To</div><div className="inv-party-name">{invoice.clientName}</div><div className="inv-party-detail">{invoice.vatNote}</div></div>
+            <div><div className="inv-party-label">{t("from")}</div><div className="inv-party-name">Cantina Track SRL</div><div className="inv-party-detail">Via della Vigna 14<br/>53100 Siena, Italy<br/>VAT: IT12345678</div></div>
+            <div><div className="inv-party-label">{t("to")}</div><div className="inv-party-name">{invoice.clientName}</div><div className="inv-party-detail">{invoice.vatNote}</div></div>
           </div>
           <table className="inv-table">
-            <thead><tr><th>Description</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
+            <thead><tr><th>{t("description")}</th><th>{t("quantity")}</th><th>{t("unitPrice")}</th><th>{t("total")}</th></tr></thead>
             <tbody>
-              <tr><td>{invoice.wine} — 750ml bottles</td><td>{invoice.qty} btl</td><td>{fmtMoney(invoice.unitPrice)}</td><td>{fmtMoney(invoice.qty*invoice.unitPrice)}</td></tr>
+              <tr><td>{invoice.wine} — 750ml {t("bottles").toLowerCase()}</td><td>{invoice.qty} btl</td><td>{fmtMoney(invoice.unitPrice)}</td><td>{fmtMoney(invoice.qty*invoice.unitPrice)}</td></tr>
             </tbody>
           </table>
           <div className="inv-total-row">
-            <div><div className="inv-total-label">Subtotal</div><div style={{fontFamily:"monospace",textAlign:"right"}}>{fmtMoney(subtotal)}</div></div>
-            <div><div className="inv-total-label">VAT</div><div style={{fontFamily:"monospace",textAlign:"right",color:"#666"}}>See note</div></div>
-            <div><div className="inv-total-label">Total Due</div><div className="inv-total-value">{fmtMoney(subtotal)}</div></div>
+            <div><div className="inv-total-label">{t("subtotal")}</div><div style={{fontFamily:"monospace",textAlign:"right"}}>{fmtMoney(subtotal)}</div></div>
+            <div><div className="inv-total-label">{t("vat")}</div><div style={{fontFamily:"monospace",textAlign:"right",color:"#666"}}>{t("seeNote")}</div></div>
+            <div><div className="inv-total-label">{t("totalDue")}</div><div className="inv-total-value">{fmtMoney(subtotal)}</div></div>
           </div>
           <div className="inv-vat-note">{invoice.vatNote}</div>
-          <div className="inv-footer">Payment terms: 30 days · Bank: IBAN IT00 0000 0000 0000 0000 0000 · BIC: ITASITMM · Ref: {invoice.id}</div>
+          <div className="inv-footer">{t("paymentTerms")} · Bank: IBAN IT00 0000 0000 0000 0000 0000 · BIC: ITASITMM · {t("ref")}: {invoice.id}</div>
         </div>
       </div>
     </div>
@@ -750,8 +763,8 @@ function InvoiceModal({ invoice, onClose }) {
 }
 
 // ── Reorder Reminders ─────────────────────────────────────────────────────────
-function Reminders({ clients }) {
-  const reminders = computeReminders(clients);
+function Reminders({ clients, t }) {
+  const reminders = computeReminders(clients, t);
   const overdue = reminders.filter(c=>c.urgency==="red");
   const warning = reminders.filter(c=>c.urgency==="gold");
   const ok = reminders.filter(c=>c.urgency==="green");
@@ -761,7 +774,7 @@ function Reminders({ clients }) {
       <div className={`reminder-urgency urgency-${c.urgency}`}/>
       <div className="reminder-info">
         <div className="reminder-client">{c.name} <span className={`badge ${clientTypeColor(c.type)}`} style={{fontSize:".52rem"}}>{c.type}</span></div>
-        <div className="reminder-detail">{c.city}, {c.country} · Last order: {c.lastOrder} · Interval: every {c.reorderIntervalDays}d</div>
+        <div className="reminder-detail">{c.city}, {c.country} · {t("lastOrder")}: {c.lastOrder} · {t("reorderInterval")}: every {c.reorderIntervalDays}d</div>
         <div className="reminder-detail" style={{marginTop:4,color:"var(--cream)"}}>{c.notes}</div>
       </div>
       <div style={{textAlign:"right",flexShrink:0}}>
@@ -773,50 +786,50 @@ function Reminders({ clients }) {
 
   return (
     <>
-      <div className="page-header"><div className="page-header-left"><h2>Reorder Reminders</h2><p>CLIENT FOLLOW-UP TRACKER</p></div></div>
+      <div className="page-header"><div className="page-header-left"><h2>{t("reorderRemindersFull")}</h2><p>{t("followUpSub")}</p></div></div>
       <div className="stats-grid-3">
-        <div className="stat-card danger"><div className="stat-label">Overdue</div><div className="stat-value">{overdue.length}</div><div className="stat-sub">needs immediate follow-up</div></div>
-        <div className="stat-card gold"><div className="stat-label">Due Soon</div><div className="stat-value">{warning.length}</div><div className="stat-sub">approaching reorder window</div></div>
-        <div className="stat-card green"><div className="stat-label">On Track</div><div className="stat-value">{ok.length}</div><div className="stat-sub">no action needed</div></div>
+        <div className="stat-card danger"><div className="stat-label">{t("overdue")}</div><div className="stat-value">{overdue.length}</div><div className="stat-sub">{t("needsFollowUp")}</div></div>
+        <div className="stat-card gold"><div className="stat-label">{t("dueSoon")}</div><div className="stat-value">{warning.length}</div><div className="stat-sub">{t("approachingWindow")}</div></div>
+        <div className="stat-card green"><div className="stat-label">{t("onTrack")}</div><div className="stat-value">{ok.length}</div><div className="stat-sub">{t("noActionNeeded")}</div></div>
       </div>
-      {overdue.length>0&&<><div className="section-title" style={{color:"#e08080"}}>⚠ Overdue — Contact Now</div>{overdue.map(c=><RCard key={c.id} c={c}/>)}<div className="divider"/></>}
-      {warning.length>0&&<><div className="section-title" style={{color:"var(--gold)"}}>Due Soon</div>{warning.map(c=><RCard key={c.id} c={c}/>)}<div className="divider"/></>}
-      {ok.length>0&&<><div className="section-title">On Track</div>{ok.map(c=><RCard key={c.id} c={c}/>)}</>}
+      {overdue.length>0&&<><div className="section-title" style={{color:"#e08080"}}>{t("overdueContactNow")}</div>{overdue.map(c=><RCard key={c.id} c={c}/>)}<div className="divider"/></>}
+      {warning.length>0&&<><div className="section-title" style={{color:"var(--gold)"}}>{t("dueSoon")}</div>{warning.map(c=><RCard key={c.id} c={c}/>)}<div className="divider"/></>}
+      {ok.length>0&&<><div className="section-title">{t("onTrack")}</div>{ok.map(c=><RCard key={c.id} c={c}/>)}</>}
     </>
   );
 }
 
 // ── Harvest Tracking ──────────────────────────────────────────────────────────
-function Harvest({ harvests, onAdd }) {
+function Harvest({ harvests, onAdd, t }) {
   const [selected,setSelected]=useState(null);
-  if(selected) return <HarvestDetail harvest={selected} onBack={()=>setSelected(null)}/>;
+  if(selected) return <HarvestDetail harvest={selected} onBack={()=>setSelected(null)} t={t}/>;
   const totalKg=harvests.reduce((s,h)=>s+h.kgHarvested,0);
   const activeCount=harvests.filter(h=>h.stage!=="Bottled").length;
   return (
     <>
-      <div className="page-header"><div className="page-header-left"><h2>Harvest & Production</h2><p>WINEMAKING LOGBOOK</p></div><button className="btn btn-gold" onClick={onAdd}>+ New Harvest</button></div>
+      <div className="page-header"><div className="page-header-left"><h2>{t("harvestProduction")}</h2><p>{t("wineLogSub")}</p></div><button className="btn btn-gold" onClick={onAdd}>{t("newHarvest")}</button></div>
       <div className="stats-grid-3">
-        <div className="stat-card green"><div className="stat-label">Active Productions</div><div className="stat-value">{activeCount}</div><div className="stat-sub">{harvests.length} total records</div></div>
-        <div className="stat-card"><div className="stat-label">Total Kg Harvested</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{totalKg.toLocaleString()}</div><div className="stat-sub">this logbook</div></div>
-        <div className="stat-card"><div className="stat-label">Expected Bottles</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{harvests.filter(h=>h.stage!=="Bottled").reduce((s,h)=>s+h.expectedBottles,0).toLocaleString()}</div><div className="stat-sub">in pipeline</div></div>
+        <div className="stat-card green"><div className="stat-label">{t("activeProductions")}</div><div className="stat-value">{activeCount}</div><div className="stat-sub">{harvests.length} {t("totalRecords")}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("totalKgHarvested")}</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{totalKg.toLocaleString()}</div><div className="stat-sub">{t("thisLogbook")}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("expectedBottles")}</div><div className="stat-value" style={{fontSize:"1.5rem",marginTop:4}}>{harvests.filter(h=>h.stage!=="Bottled").reduce((s,h)=>s+h.expectedBottles,0).toLocaleString()}</div><div className="stat-sub">{t("inPipeline")}</div></div>
       </div>
       <div className="harvest-grid">
-        {harvests.map(h=>{
+        {harvests.length===0?<div className="empty" style={{gridColumn:"1/-1"}}>{t("noHarvestsYet")}</div>:harvests.map(h=>{
           const si=stageIndex(h.stage);
           return (
             <div className="harvest-card" key={h.id} onClick={()=>setSelected(h)}>
               <h4>{h.grape} <span style={{fontFamily:"var(--font-mono)",fontSize:".7rem",color:"var(--muted)"}}>{h.vintage}</span></h4>
-              <div className="hc-sub">{h.plot} · Harvested {h.harvestDate}</div>
+              <div className="hc-sub">{h.plot} · {t("harvestLabel")} {h.harvestDate}</div>
               <div className="hc-stages">
                 {["Harvest","Ferment","Aging","Bottled"].map((s,i)=>(
                   <div key={s} className={`hc-stage ${i<si?"done":i===si?"active":""}`}/>
                 ))}
               </div>
               <span className={`badge ${harvestStageColor(h.stage)}`} style={{marginBottom:10,display:"inline-block"}}>{h.stage}</span>
-              <div className="hc-row"><span>Kg Harvested</span><span>{h.kgHarvested.toLocaleString()}</span></div>
-              <div className="hc-row"><span>Brix at Harvest</span><span>{h.brixAtHarvest}°</span></div>
-              <div className="hc-row"><span>pH</span><span>{h.ph}</span></div>
-              <div className="hc-row"><span>Expected Bottles</span><span>{h.expectedBottles.toLocaleString()}</span></div>
+              <div className="hc-row"><span>{t("kgHarvested")}</span><span>{h.kgHarvested.toLocaleString()}</span></div>
+              <div className="hc-row"><span>{t("brix")}</span><span>{h.brixAtHarvest}°</span></div>
+              <div className="hc-row"><span>{t("ph")}</span><span>{h.ph}</span></div>
+              <div className="hc-row"><span>{t("expectedBottles")}</span><span>{h.expectedBottles.toLocaleString()}</span></div>
             </div>
           );
         })}
@@ -825,12 +838,12 @@ function Harvest({ harvests, onAdd }) {
   );
 }
 
-function HarvestDetail({ harvest:h, onBack }) {
+function HarvestDetail({ harvest:h, onBack, t }) {
   const si=stageIndex(h.stage);
   const stages=["Harvest","Fermenting","Aging","Bottled"];
   return (
     <>
-      <button className="profile-back" onClick={onBack}>← Back to Harvest Log</button>
+      <button className="profile-back" onClick={onBack}>{t("backToHarvestLog")}</button>
       <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:28}}>
         <div className="profile-avatar">🍇</div>
         <div>
@@ -851,9 +864,9 @@ function HarvestDetail({ harvest:h, onBack }) {
       </div>
       <div className="two-col">
         <div>
-          <div className="section-title">Harvest Data</div>
+          <div className="section-title">{t("harvestData")}</div>
           <div className="table-wrap" style={{padding:"16px 20px"}}>
-            {[["Grape Variety",h.grape],["Vineyard Plot",h.plot],["Vintage",h.vintage],["Harvest Date",h.harvestDate],["Kg Harvested",h.kgHarvested.toLocaleString()+" kg"],["Brix at Harvest",h.brixAtHarvest+"°"],["pH",h.ph]].map(([k,v])=>(
+            {[[t("grapeVariety"),h.grape],[t("vineyardPlot"),h.plot],[t("vintage"),h.vintage],[t("harvestDate"),h.harvestDate],[t("kgHarvested"),h.kgHarvested.toLocaleString()+" kg"],[t("brix"),h.brixAtHarvest+"°"],[t("ph"),h.ph]].map(([k,v])=>(
               <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:".58rem",color:"var(--muted)",letterSpacing:".1em",textTransform:"uppercase"}}>{k}</span>
                 <span style={{fontSize:".9rem"}}>{v}</span>
@@ -862,9 +875,9 @@ function HarvestDetail({ harvest:h, onBack }) {
           </div>
         </div>
         <div>
-          <div className="section-title">Production Timeline</div>
+          <div className="section-title">{t("productionTimeline")}</div>
           <div className="table-wrap" style={{padding:"16px 20px"}}>
-            {[["Fermentation Start",h.fermentStart||"—"],["Fermentation End",h.fermentEnd||"In progress"],["Aging Start",h.agingStart||"—"],["Aging Vessel",h.agingVessel],["Expected Bottling",h.expectedBottling],["Expected Bottles",h.expectedBottles.toLocaleString()]].map(([k,v])=>(
+            {[[t("fermentationStart"),h.fermentStart||"—"],[t("fermentationEnd"),h.fermentEnd||t("inProgress")],[t("agingStart"),h.agingStart||"—"],[t("agingVessel"),h.agingVessel],[t("expectedBottling"),h.expectedBottling],[t("expectedBottles"),h.expectedBottles.toLocaleString()]].map(([k,v])=>(
               <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:".58rem",color:"var(--muted)",letterSpacing:".1em",textTransform:"uppercase"}}>{k}</span>
                 <span style={{fontSize:".9rem"}}>{v}</span>
@@ -879,27 +892,27 @@ function HarvestDetail({ harvest:h, onBack }) {
 }
 
 // ── Clients ───────────────────────────────────────────────────────────────────
-function Clients({ clients, transactions, onAdd, onSelect }) {
+function Clients({ clients, transactions, onAdd, onSelect, t }) {
   const [search,setSearch]=useState(""); const [ft,setFt]=useState("All");
   const filtered=clients.filter(c=>(ft==="All"||c.type===ft)&&(c.name.toLowerCase().includes(search.toLowerCase())||c.country.toLowerCase().includes(search.toLowerCase())));
   return (
     <>
-      <div className="page-header"><div className="page-header-left"><h2>Clients</h2><p>ALL ACCOUNTS</p></div></div>
+      <div className="page-header"><div className="page-header-left"><h2>{t("clients")}</h2><p>{t("allAccountsSub")}</p></div></div>
       <div className="stats-grid-3">
-        <div className="stat-card green"><div className="stat-label">Total Accounts</div><div className="stat-value">{clients.length}</div><div className="stat-sub">{clients.filter(c=>c.status==="Active").length} active</div></div>
-        <div className="stat-card"><div className="stat-label">Total Bottles Shipped</div><div className="stat-value">{clients.reduce((s,c)=>s+c.totalBottles,0).toLocaleString()}</div><div className="stat-sub">lifetime</div></div>
-        <div className="stat-card danger"><div className="stat-label">Overdue Reorders</div><div className="stat-value">{clients.filter(c=>c.status==="Overdue").length}</div><div className="stat-sub">need follow-up</div></div>
+        <div className="stat-card green"><div className="stat-label">{t("totalAccountsStat")}</div><div className="stat-value">{clients.length}</div><div className="stat-sub">{clients.filter(c=>c.status==="Active").length} {t("active")}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("totalBottlesShipped")}</div><div className="stat-value">{clients.reduce((s,c)=>s+c.totalBottles,0).toLocaleString()}</div><div className="stat-sub">{t("lifetime")}</div></div>
+        <div className="stat-card danger"><div className="stat-label">{t("overdueReorders")}</div><div className="stat-value">{clients.filter(c=>c.status==="Overdue").length}</div><div className="stat-sub">{t("needFollowUp")}</div></div>
       </div>
       <div className="search-bar">
-        <input placeholder="Search by name or country…" value={search} onChange={e=>setSearch(e.target.value)}/>
+        <input placeholder={t("searchClients")} value={search} onChange={e=>setSearch(e.target.value)}/>
         <select style={{background:"var(--card)",border:"1px solid var(--border)",borderRadius:6,padding:"9px 13px",color:"var(--cream)",fontFamily:"var(--font-serif)",fontSize:".92rem",outline:"none"}} value={ft} onChange={e=>setFt(e.target.value)}>
-          {["All","Restaurant","Distributor","Retailer","Private"].map(t=><option key={t}>{t}</option>)}
+          {["All","Restaurant","Distributor","Retailer","Private"].map(typ=><option key={typ} value={typ}>{typ==="All"?t("all"):typ}</option>)}
         </select>
-        <button className="btn btn-gold" onClick={onAdd}>+ New Client</button>
+        <button className="btn btn-gold" onClick={onAdd}>{t("newClient")}</button>
       </div>
       <div className="clients-grid">
-        {filtered.length===0?<div className="empty" style={{gridColumn:"1/-1"}}>No clients found</div>:filtered.map(c=>{
-          const clientTx=transactions.filter(t=>t.clientId===c.id);
+        {filtered.length===0?<div className="empty" style={{gridColumn:"1/-1"}}>{t("noClients")}</div>:filtered.map(c=>{
+          const clientTx=transactions.filter(tx=>tx.clientId===c.id);
           return (
             <div className="client-card" key={c.id} onClick={()=>onSelect(c)}>
               <div style={{display:"flex",gap:11,alignItems:"flex-start",justifyContent:"space-between"}}>
@@ -911,9 +924,9 @@ function Clients({ clients, transactions, onAdd, onSelect }) {
               </div>
               <div style={{marginTop:10,display:"flex",gap:7}}><span className={`badge ${clientTypeColor(c.type)}`}>{c.type}</span><span style={{fontFamily:"var(--font-mono)",fontSize:".58rem",color:"var(--muted)",alignSelf:"center"}}>{c.pricingTier}</span></div>
               <div className="client-stats">
-                <div className="client-stat"><div className="client-stat-label">Shipped</div><div className="client-stat-value">{c.totalBottles.toLocaleString()}</div></div>
-                <div className="client-stat"><div className="client-stat-label">Orders</div><div className="client-stat-value">{clientTx.length}</div></div>
-                <div className="client-stat"><div className="client-stat-label">Last Order</div><div className="client-stat-value" style={{fontSize:".7rem"}}>{c.lastOrder}</div></div>
+                <div className="client-stat"><div className="client-stat-label">{t("shipped")}</div><div className="client-stat-value">{c.totalBottles.toLocaleString()}</div></div>
+                <div className="client-stat"><div className="client-stat-label">{t("orders")}</div><div className="client-stat-value">{clientTx.length}</div></div>
+                <div className="client-stat"><div className="client-stat-label">{t("lastOrder")}</div><div className="client-stat-value" style={{fontSize:".7rem"}}>{c.lastOrder}</div></div>
               </div>
             </div>
           );
@@ -923,12 +936,12 @@ function Clients({ clients, transactions, onAdd, onSelect }) {
   );
 }
 
-function ClientProfile({ client:c, transactions, onBack }) {
-  const clientTx=transactions.filter(t=>t.clientId===c.id);
+function ClientProfile({ client:c, transactions, onBack, t }) {
+  const clientTx=transactions.filter(tx=>tx.clientId===c.id);
   const ds=daysSince(c.lastOrder);
   return (
     <>
-      <button className="profile-back" onClick={onBack}>← Back to Clients</button>
+      <button className="profile-back" onClick={onBack}>{t("backToClients")}</button>
       <div style={{display:"flex",alignItems:"center",gap:18,marginBottom:28}}>
         <div className="profile-avatar">{initials(c.name)}</div>
         <div>
@@ -940,18 +953,18 @@ function ClientProfile({ client:c, transactions, onBack }) {
           </div>
         </div>
       </div>
-      {c.status==="Overdue"&&<div className="alert"><span className="reorder-dot"/>Last order was {ds} days ago — this client is overdue for follow-up.</div>}
+      {c.status==="Overdue"&&<div className="alert"><span className="reorder-dot"/>{t("overdueFollowUp").replace("{0}", ds)}</div>}
       <div className="stats-grid">
-        <div className="stat-card green"><div className="stat-label">Total Bottles</div><div className="stat-value">{c.totalBottles.toLocaleString()}</div><div className="stat-sub">lifetime shipped</div></div>
-        <div className="stat-card"><div className="stat-label">Orders</div><div className="stat-value">{clientTx.length}</div><div className="stat-sub">transactions</div></div>
-        <div className="stat-card"><div className="stat-label">Days Since Order</div><div className="stat-value">{ds}</div><div className="stat-sub">last: {c.lastOrder}</div></div>
-        <div className="stat-card"><div className="stat-label">Pricing Tier</div><div className="stat-value" style={{fontSize:"1.1rem",marginTop:6}}>{c.pricingTier}</div><div className="stat-sub">{fmtMoney(PRICE_TIERS[c.pricingTier]||0)}/btl</div></div>
+        <div className="stat-card green"><div className="stat-label">{t("totalBottles")}</div><div className="stat-value">{c.totalBottles.toLocaleString()}</div><div className="stat-sub">{t("lifetimeShipped")}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("orders")}</div><div className="stat-value">{clientTx.length}</div><div className="stat-sub">{t("transactions").toLowerCase()}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("daysSinceOrder")}</div><div className="stat-value">{ds}</div><div className="stat-sub">{t("last")}: {c.lastOrder}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("pricingTier")}</div><div className="stat-value" style={{fontSize:"1.1rem",marginTop:6}}>{c.pricingTier}</div><div className="stat-sub">{fmtMoney(PRICE_TIERS[c.pricingTier]||0)}/btl</div></div>
       </div>
       <div className="two-col">
         <div>
-          <div className="section-title">Contact Details</div>
+          <div className="section-title">{t("contactDetails")}</div>
           <div className="table-wrap" style={{padding:"16px 20px"}}>
-            {[["Contact",c.contact],["Email",c.email],["Phone",c.phone],["City",c.city],["Country",c.country],["VAT Regime",isEU(c.country)?"EU Intra-community":"Export / Third country"],["Reorder Interval",`Every ${c.reorderIntervalDays} days`]].map(([k,v])=>(
+            {[[t("contact"),c.contact],[t("email"),c.email],[t("phone"),c.phone],[t("city"),c.city],[t("country"),c.country],[t("vatRegime"),isEU(c.country)?"EU Intra-community":"Export / Third country"],[t("reorderInterval"),`Every ${c.reorderIntervalDays} days`]].map(([k,v])=>(
               <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid var(--border)"}}>
                 <span style={{fontFamily:"var(--font-mono)",fontSize:".58rem",color:"var(--muted)",letterSpacing:".1em",textTransform:"uppercase"}}>{k}</span>
                 <span style={{fontSize:".9rem"}}>{v}</span>
@@ -961,9 +974,9 @@ function ClientProfile({ client:c, transactions, onBack }) {
           </div>
         </div>
         <div>
-          <div className="section-title">Order History</div>
+          <div className="section-title">{t("orderHistory")}</div>
           <div className="table-wrap">
-            {clientTx.length===0?<div className="empty">No transactions yet</div>:clientTx.map(tx=>{const {cls,icon}=txIcon(tx.type);return(
+            {clientTx.length===0?<div className="empty">{t("noTransactions")}</div>:clientTx.map(tx=>{const {cls,icon}=txIcon(tx.type);return(
               <div className="tx-item" key={tx.id}><div className={`tx-icon ${cls}`}>{icon}</div><div className="tx-info"><div className="tx-title">{tx.wine}</div><div className="tx-meta">{tx.batch} · {tx.note} · {tx.date}{tx.invoiceId&&<span style={{color:"var(--gold)"}}> · {tx.invoiceId}</span>}</div></div>{tx.qty!==0&&<div className={`tx-qty ${tx.qty>0?"pos":"neg"}`}>{tx.qty>0?"+":""}{tx.qty}</div>}</div>
             );})}
           </div>
@@ -974,28 +987,28 @@ function ClientProfile({ client:c, transactions, onBack }) {
 }
 
 // ── Modals ────────────────────────────────────────────────────────────────────
-function AddBatchModal({ onClose, onSave }) {
+function AddBatchModal({ onClose, onSave, t }) {
   const [form,setForm]=useState({wine:"",vintage:new Date().getFullYear(),type:"Red",grapes:"",plot:"",qty:"",location:"Main Cellar"});
   const set=(k,v)=>setForm(p=>({...p,[k]:v}));
   const handleSave=()=>{if(!form.wine||!form.qty)return;const abbr=form.type==="Sparkling"?"BRUT":form.wine.split(" ").pop().toUpperCase().slice(0,5);const id=`LOT-${form.vintage}-${abbr}-${String(Math.floor(Math.random()*90+10)).padStart(2,"0")}`;onSave({...form,id,qty:parseInt(form.qty),vintage:parseInt(form.vintage),status:"Aging",bottled:new Date().toISOString().slice(0,10)});onClose();};
-  return <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal"><h3>New Batch / Lot</h3><div className="form-group"><label>Wine Name</label><input placeholder="e.g. Riserva Sangiovese" value={form.wine} onChange={e=>set("wine",e.target.value)}/></div><div className="form-row"><div className="form-group"><label>Vintage Year</label><input type="number" value={form.vintage} onChange={e=>set("vintage",e.target.value)}/></div><div className="form-group"><label>Type</label><select value={form.type} onChange={e=>set("type",e.target.value)}>{["Red","White","Rosé","Sparkling"].map(t=><option key={t}>{t}</option>)}</select></div></div><div className="form-group"><label>Grape Varieties</label><input placeholder="e.g. Sangiovese 80%" value={form.grapes} onChange={e=>set("grapes",e.target.value)}/></div><div className="form-row"><div className="form-group"><label>Vineyard Plot</label><input placeholder="e.g. East Hill" value={form.plot} onChange={e=>set("plot",e.target.value)}/></div><div className="form-group"><label>Bottles Filled</label><input type="number" placeholder="e.g. 2400" value={form.qty} onChange={e=>set("qty",e.target.value)}/></div></div><div className="form-group"><label>Storage Location</label><select value={form.location} onChange={e=>set("location",e.target.value)}>{LOCATIONS.map(l=><option key={l.name}>{l.name}</option>)}</select></div><div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>Cancel</button><button className="btn btn-gold" onClick={handleSave}>Create Batch</button></div></div></div>;
+  return <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal"><h3>{t("newBatchTitle")}</h3><div className="form-group"><label>{t("wineName")}</label><input placeholder="e.g. Riserva Sangiovese" value={form.wine} onChange={e=>set("wine",e.target.value)}/></div><div className="form-row"><div className="form-group"><label>{t("vintageYear")}</label><input type="number" value={form.vintage} onChange={e=>set("vintage",e.target.value)}/></div><div className="form-group"><label>{t("type")}</label><select value={form.type} onChange={e=>set("type",e.target.value)}>{["Red","White","Rosé","Sparkling"].map(typ=><option key={typ}>{typ}</option>)}</select></div></div><div className="form-group"><label>{t("grapeVarieties")}</label><input placeholder="e.g. Sangiovese 80%" value={form.grapes} onChange={e=>set("grapes",e.target.value)}/></div><div className="form-row"><div className="form-group"><label>{t("vineyardPlot")}</label><input placeholder="e.g. East Hill" value={form.plot} onChange={e=>set("plot",e.target.value)}/></div><div className="form-group"><label>{t("bottlesFilled")}</label><input type="number" placeholder="e.g. 2400" value={form.qty} onChange={e=>set("qty",e.target.value)}/></div></div><div className="form-group"><label>{t("storageLocation")}</label><select value={form.location} onChange={e=>set("location",e.target.value)}>{LOCATIONS.map(l=><option key={l.name}>{l.name}</option>)}</select></div><div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button><button className="btn btn-gold" onClick={handleSave}>{t("createBatch")}</button></div></div></div>;
 }
 
-function AddClientModal({ onClose, onSave }) {
+function AddClientModal({ onClose, onSave, t }) {
   const [form,setForm]=useState({name:"",country:"",city:"",type:"Restaurant",contact:"",email:"",phone:"",pricingTier:"Standard",reorderIntervalDays:60,notes:""});
   const set=(k,v)=>setForm(p=>({...p,[k]:v}));
   const handleSave=()=>{if(!form.name||!form.country)return;onSave({...form,id:`CLI-${String(Date.now()).slice(-4)}`,status:"Active",totalBottles:0,lastOrder:"—",reorderIntervalDays:parseInt(form.reorderIntervalDays)});onClose();};
-  return <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal"><h3>New Client</h3><div className="form-row"><div className="form-group"><label>Client Name</label><input placeholder="e.g. Maison Dubois" value={form.name} onChange={e=>set("name",e.target.value)}/></div><div className="form-group"><label>Type</label><select value={form.type} onChange={e=>set("type",e.target.value)}>{["Restaurant","Distributor","Retailer","Private"].map(t=><option key={t}>{t}</option>)}</select></div></div><div className="form-row"><div className="form-group"><label>Country</label><input placeholder="e.g. France" value={form.country} onChange={e=>set("country",e.target.value)}/></div><div className="form-group"><label>City</label><input placeholder="e.g. Lyon" value={form.city} onChange={e=>set("city",e.target.value)}/></div></div><div className="form-group"><label>Contact Person</label><input value={form.contact} onChange={e=>set("contact",e.target.value)}/></div><div className="form-row"><div className="form-group"><label>Email</label><input value={form.email} onChange={e=>set("email",e.target.value)}/></div><div className="form-group"><label>Phone</label><input value={form.phone} onChange={e=>set("phone",e.target.value)}/></div></div><div className="form-row"><div className="form-group"><label>Pricing Tier</label><select value={form.pricingTier} onChange={e=>set("pricingTier",e.target.value)}>{["Standard","Premium","Wholesale","Export"].map(t=><option key={t}>{t}</option>)}</select></div><div className="form-group"><label>Reorder Interval (days)</label><input type="number" value={form.reorderIntervalDays} onChange={e=>set("reorderIntervalDays",e.target.value)}/></div></div><div className="form-group"><label>Notes</label><input value={form.notes} onChange={e=>set("notes",e.target.value)}/></div><div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>Cancel</button><button className="btn btn-gold" onClick={handleSave}>Save Client</button></div></div></div>;
+  return <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal"><h3>{t("newClientTitle")}</h3><div className="form-row"><div className="form-group"><label>{t("clientName")}</label><input placeholder="e.g. Maison Dubois" value={form.name} onChange={e=>set("name",e.target.value)}/></div><div className="form-group"><label>{t("type")}</label><select value={form.type} onChange={e=>set("type",e.target.value)}>{["Restaurant","Distributor","Retailer","Private"].map(typ=><option key={typ}>{typ}</option>)}</select></div></div><div className="form-row"><div className="form-group"><label>{t("country")}</label><input placeholder="e.g. France" value={form.country} onChange={e=>set("country",e.target.value)}/></div><div className="form-group"><label>{t("city")}</label><input placeholder="e.g. Lyon" value={form.city} onChange={e=>set("city",e.target.value)}/></div></div><div className="form-group"><label>{t("contactPerson")}</label><input value={form.contact} onChange={e=>set("contact",e.target.value)}/></div><div className="form-row"><div className="form-group"><label>{t("email")}</label><input value={form.email} onChange={e=>set("email",e.target.value)}/></div><div className="form-group"><label>{t("phone")}</label><input value={form.phone} onChange={e=>set("phone",e.target.value)}/></div></div><div className="form-row"><div className="form-group"><label>{t("pricingTier")}</label><select value={form.pricingTier} onChange={e=>set("pricingTier",e.target.value)}>{["Standard","Premium","Wholesale","Export"].map(typ=><option key={typ}>{typ}</option>)}</select></div><div className="form-group"><label>{t("reorderIntervalDays")}</label><input type="number" value={form.reorderIntervalDays} onChange={e=>set("reorderIntervalDays",e.target.value)}/></div></div><div className="form-group"><label>{t("notes")}</label><input value={form.notes} onChange={e=>set("notes",e.target.value)}/></div><div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button><button className="btn btn-gold" onClick={handleSave}>{t("saveClient")}</button></div></div></div>;
 }
 
-function AddHarvestModal({ onClose, onSave }) {
+function AddHarvestModal({ onClose, onSave, t }) {
   const [form,setForm]=useState({grape:"",plot:"",vintage:new Date().getFullYear(),harvestDate:"",kgHarvested:"",brixAtHarvest:"",ph:"",fermentStart:"",agingVessel:"French Oak",expectedBottling:"",expectedBottles:"",stage:"Harvest",notes:""});
   const set=(k,v)=>setForm(p=>({...p,[k]:v}));
   const handleSave=()=>{if(!form.grape||!form.harvestDate)return;onSave({...form,id:`HARV-${form.vintage}-${form.grape.toUpperCase().slice(0,4)}`,kgHarvested:parseInt(form.kgHarvested)||0,brixAtHarvest:parseFloat(form.brixAtHarvest)||0,ph:parseFloat(form.ph)||0,expectedBottles:parseInt(form.expectedBottles)||0,vintage:parseInt(form.vintage),fermentEnd:null,agingStart:null});onClose();};
-  return <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal"><h3>Log New Harvest</h3><div className="form-row"><div className="form-group"><label>Grape Variety</label><input placeholder="e.g. Sangiovese" value={form.grape} onChange={e=>set("grape",e.target.value)}/></div><div className="form-group"><label>Vintage</label><input type="number" value={form.vintage} onChange={e=>set("vintage",e.target.value)}/></div></div><div className="form-row"><div className="form-group"><label>Vineyard Plot</label><input placeholder="e.g. East Hill" value={form.plot} onChange={e=>set("plot",e.target.value)}/></div><div className="form-group"><label>Harvest Date</label><input type="date" value={form.harvestDate} onChange={e=>set("harvestDate",e.target.value)}/></div></div><div className="form-row-3"><div className="form-group"><label>Kg Harvested</label><input type="number" placeholder="12400" value={form.kgHarvested} onChange={e=>set("kgHarvested",e.target.value)}/></div><div className="form-group"><label>Brix °</label><input type="number" step=".1" placeholder="24.2" value={form.brixAtHarvest} onChange={e=>set("brixAtHarvest",e.target.value)}/></div><div className="form-group"><label>pH</label><input type="number" step=".01" placeholder="3.41" value={form.ph} onChange={e=>set("ph",e.target.value)}/></div></div><div className="form-row"><div className="form-group"><label>Fermentation Start</label><input type="date" value={form.fermentStart} onChange={e=>set("fermentStart",e.target.value)}/></div><div className="form-group"><label>Aging Vessel</label><input placeholder="e.g. French Oak 225L x12" value={form.agingVessel} onChange={e=>set("agingVessel",e.target.value)}/></div></div><div className="form-row"><div className="form-group"><label>Expected Bottling</label><input type="date" value={form.expectedBottling} onChange={e=>set("expectedBottling",e.target.value)}/></div><div className="form-group"><label>Expected Bottles</label><input type="number" placeholder="16500" value={form.expectedBottles} onChange={e=>set("expectedBottles",e.target.value)}/></div></div><div className="form-group"><label>Current Stage</label><select value={form.stage} onChange={e=>set("stage",e.target.value)}>{["Harvest","Fermenting","Aging","Bottled"].map(s=><option key={s}>{s}</option>)}</select></div><div className="form-group"><label>Notes</label><textarea value={form.notes} onChange={e=>set("notes",e.target.value)} placeholder="Observations, quality notes…"/></div><div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>Cancel</button><button className="btn btn-gold" onClick={handleSave}>Log Harvest</button></div></div></div>;
+  return <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal"><h3>{t("logNewHarvest")}</h3><div className="form-row"><div className="form-group"><label>{t("grapeVariety")}</label><input placeholder="e.g. Sangiovese" value={form.grape} onChange={e=>set("grape",e.target.value)}/></div><div className="form-group"><label>{t("vintage")}</label><input type="number" value={form.vintage} onChange={e=>set("vintage",e.target.value)}/></div></div><div className="form-row"><div className="form-group"><label>{t("vineyardPlot")}</label><input placeholder="e.g. East Hill" value={form.plot} onChange={e=>set("plot",e.target.value)}/></div><div className="form-group"><label>{t("harvestDate")}</label><input type="date" value={form.harvestDate} onChange={e=>set("harvestDate",e.target.value)}/></div></div><div className="form-row-3"><div className="form-group"><label>{t("kgHarvested")}</label><input type="number" placeholder="12400" value={form.kgHarvested} onChange={e=>set("kgHarvested",e.target.value)}/></div><div className="form-group"><label>{t("brix")}</label><input type="number" step=".1" placeholder="24.2" value={form.brixAtHarvest} onChange={e=>set("brixAtHarvest",e.target.value)}/></div><div className="form-group"><label>{t("ph")}</label><input type="number" step=".01" placeholder="3.41" value={form.ph} onChange={e=>set("ph",e.target.value)}/></div></div><div className="form-row"><div className="form-group"><label>{t("fermentationStart")}</label><input type="date" value={form.fermentStart} onChange={e=>set("fermentStart",e.target.value)}/></div><div className="form-group"><label>{t("agingVessel")}</label><input placeholder="e.g. French Oak 225L x12" value={form.agingVessel} onChange={e=>set("agingVessel",e.target.value)}/></div></div><div className="form-row"><div className="form-group"><label>{t("expectedBottling")}</label><input type="date" value={form.expectedBottling} onChange={e=>set("expectedBottling",e.target.value)}/></div><div className="form-group"><label>{t("expectedBottles")}</label><input type="number" placeholder="16500" value={form.expectedBottles} onChange={e=>set("expectedBottles",e.target.value)}/></div></div><div className="form-group"><label>{t("currentStage")}</label><select value={form.stage} onChange={e=>set("stage",e.target.value)}>{["Harvest","Fermenting","Aging","Bottled"].map(s=><option key={s}>{s}</option>)}</select></div><div className="form-group"><label>{t("notes")}</label><textarea value={form.notes} onChange={e=>set("notes",e.target.value)} placeholder={t("observations")}/></div><div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button><button className="btn btn-gold" onClick={handleSave}>{t("logHarvest")}</button></div></div></div>;
 }
 
-function LogTransactionModal({ batch, clients, onClose, onSave }) {
+function LogTransactionModal({ batch, clients, onClose, onSave, t }) {
   const [form,setForm]=useState({type:"out",qty:"",clientId:"",note:"",user:""});
   const set=(k,v)=>setForm(p=>({...p,[k]:v}));
   const sc=clients.find(c=>c.id===form.clientId);
@@ -1011,20 +1024,20 @@ function LogTransactionModal({ batch, clients, onClose, onSave }) {
     );
     onClose();
   };
-  const typeLabels={in:"Inbound (add stock)",out:"Outbound (shipment)",write:"Write-off (breakage/tasting)",move:"Internal Move"};
+  const typeLabels={in:t("inbound"),out:t("outbound"),write:t("writeOff"),move:t("internalMove")};
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal">
-        <h3>Log Transaction</h3>
-        <div className="info-box">{batch.id} — {batch.wine} — <span>{batch.qty.toLocaleString()} btl available</span></div>
-        <div className="form-group"><label>Transaction Type</label><select value={form.type} onChange={e=>set("type",e.target.value)}>{Object.entries(typeLabels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
-        {form.type==="out"&&<div className="form-group"><label>Client (required for shipments)</label><select value={form.clientId} onChange={e=>set("clientId",e.target.value)}><option value="">— Select a client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name} ({c.country})</option>)}</select></div>}
-        {sc&&<div className="info-box">{sc.city}, {sc.country} · {sc.type} · {sc.pricingTier} ({fmtMoney(PRICE_TIERS[sc.pricingTier]||12)}/btl){isEU(sc.country)?<span className="eu-flag">EU</span>:<span className="export-flag">Export</span>}<br/><span style={{marginTop:4,display:"block"}}>An invoice will be auto-generated on save.</span></div>}
-        {form.type!=="move"&&<div className="form-group"><label>Quantity (bottles)</label><input type="number" placeholder="e.g. 200" value={form.qty} onChange={e=>set("qty",e.target.value)}/></div>}
-        {sc&&form.qty&&<div className="info-box">Order value: <span>{fmtMoney(parseInt(form.qty)*(PRICE_TIERS[sc.pricingTier]||12))}</span></div>}
-        <div className="form-group"><label>Note</label><input placeholder="e.g. Q1 allocation…" value={form.note} onChange={e=>set("note",e.target.value)}/></div>
-        <div className="form-group"><label>Staff Name</label><input placeholder="Your name" value={form.user} onChange={e=>set("user",e.target.value)}/></div>
-        <div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>Cancel</button><button className="btn btn-gold" onClick={handleSave}>Log & Generate Invoice</button></div>
+        <h3>{t("logTransaction")}</h3>
+        <div className="info-box">{batch.id} — {batch.wine} — <span>{batch.qty.toLocaleString()} {t("btlAvailable")}</span></div>
+        <div className="form-group"><label>{t("transactionType")}</label><select value={form.type} onChange={e=>set("type",e.target.value)}>{Object.entries(typeLabels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div>
+        {form.type==="out"&&<div className="form-group"><label>{t("clientRequired")}</label><select value={form.clientId} onChange={e=>set("clientId",e.target.value)}><option value="">{t("selectClient")}</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name} ({c.country})</option>)}</select></div>}
+        {sc&&<div className="info-box">{sc.city}, {sc.country} · {sc.type} · {sc.pricingTier} ({fmtMoney(PRICE_TIERS[sc.pricingTier]||12)}/btl){isEU(sc.country)?<span className="eu-flag">EU</span>:<span className="export-flag">Export</span>}<br/><span style={{marginTop:4,display:"block"}}>{t("invoiceAutoGenerated")}</span></div>}
+        {form.type!=="move"&&<div className="form-group"><label>{t("quantityBottles")}</label><input type="number" placeholder="e.g. 200" value={form.qty} onChange={e=>set("qty",e.target.value)}/></div>}
+        {sc&&form.qty&&<div className="info-box">{t("orderValue")}: <span>{fmtMoney(parseInt(form.qty)*(PRICE_TIERS[sc.pricingTier]||12))}</span></div>}
+        <div className="form-group"><label>{t("note")}</label><input placeholder="e.g. Q1 allocation…" value={form.note} onChange={e=>set("note",e.target.value)}/></div>
+        <div className="form-group"><label>{t("staffName")}</label><input placeholder="Your name" value={form.user} onChange={e=>set("user",e.target.value)}/></div>
+        <div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button><button className="btn btn-gold" onClick={handleSave}>{t("logAndGenerate")}</button></div>
       </div>
     </div>
   );
@@ -1077,7 +1090,7 @@ function LineChart({ data, color = "#c9a84c" }) {
   );
 }
 
-function DonutChart({ segments }) {
+function DonutChart({ segments, t }) {
   const total = segments.reduce((s, d) => s + d.value, 0) || 1;
   let offset = 0;
   const r = 40, cx = 50, cy = 50, stroke = 24;
@@ -1090,6 +1103,7 @@ function DonutChart({ segments }) {
     offset += pct;
     return arc;
   });
+  const bottlesLabel = t ? t("bottles").toUpperCase() : "BOTTLES";
   return (
     <div className="donut-wrap">
       <svg className="donut-svg" width="100" height="100" viewBox="0 0 100 100">
@@ -1100,7 +1114,7 @@ function DonutChart({ segments }) {
             style={{ transition: "stroke-dasharray .5s" }} />
         ))}
         <text x={cx} y={cy - 4} textAnchor="middle" fill="var(--cream)" fontSize="10" fontFamily="var(--font-mono)">{total.toLocaleString()}</text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fill="var(--muted)" fontSize="5.5" fontFamily="var(--font-mono)">BOTTLES</text>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="var(--muted)" fontSize="5.5" fontFamily="var(--font-mono)">{bottlesLabel}</text>
       </svg>
       <div className="donut-legend">
         {segments.map((s, i) => (
@@ -1132,7 +1146,7 @@ function HBar({ items, max, colorFn }) {
 }
 
 // ── Analytics Page ────────────────────────────────────────────────────────────
-function Analytics({ batches, transactions, clients, invoices }) {
+function Analytics({ batches, transactions, clients, invoices, t }) {
   const [tab, setTab] = useState("revenue");
 
   // ── Revenue data ──
@@ -1149,11 +1163,11 @@ function Analytics({ batches, transactions, clients, invoices }) {
   // ── Bottles shipped by month ──
   const shipsByMonth = monthNames.map((m, i) => ({
     label: m,
-    value: Math.abs(transactions.filter(t => t.type === "out" && new Date(t.date).getMonth() === i)
-      .reduce((s, t) => s + t.qty, 0))
+    value: Math.abs(transactions.filter(tx => tx.type === "out" && new Date(tx.date).getMonth() === i)
+      .reduce((s, tx) => s + tx.qty, 0))
   }));
-  const totalShipped = Math.abs(transactions.filter(t => t.type === "out").reduce((s, t) => s + t.qty, 0));
-  const totalWriteOff = Math.abs(transactions.filter(t => t.type === "write").reduce((s, t) => s + t.qty, 0));
+  const totalShipped = Math.abs(transactions.filter(tx => tx.type === "out").reduce((s, tx) => s + tx.qty, 0));
+  const totalWriteOff = Math.abs(transactions.filter(tx => tx.type === "write").reduce((s, tx) => s + tx.qty, 0));
 
   // ── Top clients by bottles ──
   const topClients = [...clients]
@@ -1178,9 +1192,9 @@ function Analytics({ batches, transactions, clients, invoices }) {
 
   // ── Shipments by country ──
   const byCountry = {};
-  transactions.filter(t => t.type === "out" && t.clientId).forEach(t => {
-    const client = clients.find(c => c.id === t.clientId);
-    if (client) { byCountry[client.country] = (byCountry[client.country] || 0) + Math.abs(t.qty); }
+  transactions.filter(tx => tx.type === "out" && tx.clientId).forEach(tx => {
+    const client = clients.find(c => c.id === tx.clientId);
+    if (client) { byCountry[client.country] = (byCountry[client.country] || 0) + Math.abs(tx.qty); }
   });
   const countryData = Object.entries(byCountry).sort((a, b) => b[1] - a[1]).slice(0, 6)
     .map(([k, v]) => ({ label: k, value: v }));
@@ -1189,29 +1203,29 @@ function Analytics({ batches, transactions, clients, invoices }) {
   const countryColors = ["#c9a84c","#7b9c7b","#7b6c9c","#9c7b7b","#7b8c9c","#9c907b"];
 
   const tabs = [
-    { id: "revenue", label: "Revenue" },
-    { id: "inventory", label: "Inventory" },
-    { id: "clients", label: "Clients" },
-    { id: "geography", label: "Geography" },
+    { id: "revenue", label: t("revenue") },
+    { id: "inventory", label: t("inventoryTab") },
+    { id: "clients", label: t("clientsTab") },
+    { id: "geography", label: t("geography") },
   ];
 
   return (
     <>
       <div className="page-header">
         <div className="page-header-left">
-          <h2>Analytics & Reports</h2>
-          <p>BUSINESS INTELLIGENCE — 2024 DATA</p>
+          <h2>{t("analyticsReports")}</h2>
+          <p>{t("biSub")}</p>
         </div>
       </div>
 
       {/* KPI row — always visible */}
       <div className="kpi-row">
-        <div className="kpi-card"><div className="kpi-label">Total Revenue</div><div className="kpi-value">{fmtMoney(totalRevenue)}</div><div className="kpi-change kpi-up">↑ paid invoices</div></div>
-        <div className="kpi-card"><div className="kpi-label">Pending Revenue</div><div className="kpi-value">{fmtMoney(pendingRevenue)}</div><div className="kpi-change" style={{color:"var(--gold)"}}>→ awaiting payment</div></div>
-        <div className="kpi-card"><div className="kpi-label">Bottles Shipped</div><div className="kpi-value">{totalShipped.toLocaleString()}</div><div className="kpi-change kpi-down">↓ {totalWriteOff} written off</div></div>
-        <div className="kpi-card"><div className="kpi-label">Avg Order Value</div><div className="kpi-value">{fmtMoney(Math.round(avgOrderValue))}</div><div className="kpi-change" style={{color:"var(--muted)"}}>across {invoices.length} invoices</div></div>
-        <div className="kpi-card"><div className="kpi-label">Active Clients</div><div className="kpi-value">{clients.filter(c=>c.status==="Active").length}</div><div className="kpi-change kpi-down" style={{color:"#e08080"}}>{clients.filter(c=>c.status==="Overdue").length} overdue</div></div>
-        <div className="kpi-card"><div className="kpi-label">Total Stock</div><div className="kpi-value">{batches.reduce((s,b)=>s+b.qty,0).toLocaleString()}</div><div className="kpi-change" style={{color:"var(--muted)"}}>{batches.length} active lots</div></div>
+        <div className="kpi-card"><div className="kpi-label">{t("totalRevenueStat")}</div><div className="kpi-value">{fmtMoney(totalRevenue)}</div><div className="kpi-change kpi-up">↑ {t("paid").toLowerCase()} invoices</div></div>
+        <div className="kpi-card"><div className="kpi-label">{t("pendingRevenueStat")}</div><div className="kpi-value">{fmtMoney(pendingRevenue)}</div><div className="kpi-change" style={{color:"var(--gold)"}}>→ awaiting payment</div></div>
+        <div className="kpi-card"><div className="kpi-label">{t("bottlesShipped")}</div><div className="kpi-value">{totalShipped.toLocaleString()}</div><div className="kpi-change kpi-down">↓ {totalWriteOff} {t("writeOffs").toLowerCase()}</div></div>
+        <div className="kpi-card"><div className="kpi-label">{t("avgOrderValue")}</div><div className="kpi-value">{fmtMoney(Math.round(avgOrderValue))}</div><div className="kpi-change" style={{color:"var(--muted)"}}>across {invoices.length} {t("invoices").toLowerCase()}</div></div>
+        <div className="kpi-card"><div className="kpi-label">{t("activeClientsStat")}</div><div className="kpi-value">{clients.filter(c=>c.status==="Active").length}</div><div className="kpi-change kpi-down" style={{color:"#e08080"}}>{clients.filter(c=>c.status==="Overdue").length} {t("overdue").toLowerCase()}</div></div>
+        <div className="kpi-card"><div className="kpi-label">{t("totalStock")}</div><div className="kpi-value">{batches.reduce((s,b)=>s+b.qty,0).toLocaleString()}</div><div className="kpi-change" style={{color:"var(--muted)"}}>{batches.length} {t("activeLots")}</div></div>
       </div>
 
       {/* Tabs */}
@@ -1224,25 +1238,25 @@ function Analytics({ batches, transactions, clients, invoices }) {
         <div className="two-col">
           <div>
             <div className="chart-card">
-              <h4>Monthly Revenue (Paid Invoices)</h4>
+              <h4>{t("monthlyRevenue")}</h4>
               <BarChart data={revenueByMonth} color="#c9a84c" valuePrefix="€" />
             </div>
             <div className="chart-card">
-              <h4>Revenue by Client</h4>
+              <h4>{t("revenueByClient")}</h4>
               <HBar items={revenueByClient} max={maxRevClient} colorFn={i => countryColors[i % countryColors.length]} />
             </div>
           </div>
           <div>
             <div className="chart-card">
-              <h4>Revenue Trend</h4>
+              <h4>{t("revenueTrend")}</h4>
               <LineChart data={revenueByMonth.filter(m => m.value > 0).length > 1 ? revenueByMonth : revenueByMonth.map((m, i) => ({ ...m, value: Math.round(Math.random() * 8000 + 2000) }))} color="#c9a84c" />
             </div>
             <div className="chart-card">
-              <h4>Invoice Status Breakdown</h4>
-              <DonutChart segments={[
-                { label: "Paid", value: invoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.qty*i.unitPrice,0), color: "#3a6b4a" },
-                { label: "Pending", value: pendingRevenue, color: "#c9a84c" },
-                { label: "Draft", value: invoices.filter(i=>i.status==="Draft").reduce((s,i)=>s+i.qty*i.unitPrice,0), color: "#4a4030" },
+              <h4>{t("invoiceStatus")}</h4>
+              <DonutChart t={t} segments={[
+                { label: t("paid"), value: invoices.filter(i=>i.status==="Paid").reduce((s,i)=>s+i.qty*i.unitPrice,0), color: "#3a6b4a" },
+                { label: t("pending"), value: pendingRevenue, color: "#c9a84c" },
+                { label: t("draft"), value: invoices.filter(i=>i.status==="Draft").reduce((s,i)=>s+i.qty*i.unitPrice,0), color: "#4a4030" },
               ].filter(s=>s.value>0)} />
             </div>
           </div>
@@ -1254,17 +1268,17 @@ function Analytics({ batches, transactions, clients, invoices }) {
         <div className="two-col">
           <div>
             <div className="chart-card">
-              <h4>Bottles Shipped by Month</h4>
+              <h4>{t("bottlesShippedMonth")}</h4>
               <BarChart data={shipsByMonth} color="#7b9c8b" />
             </div>
             <div className="chart-card">
-              <h4>Stock by Wine Type</h4>
-              <DonutChart segments={byType} />
+              <h4>{t("stockByWineType")}</h4>
+              <DonutChart t={t} segments={byType} />
             </div>
           </div>
           <div>
             <div className="chart-card">
-              <h4>Current Stock by Batch</h4>
+              <h4>{t("currentStockLevels")}</h4>
               <HBar
                 items={[...batches].sort((a,b)=>b.qty-a.qty).map(b=>({ label: b.wine, value: b.qty }))}
                 max={Math.max(...batches.map(b=>b.qty),1)}
@@ -1272,11 +1286,11 @@ function Analytics({ batches, transactions, clients, invoices }) {
               />
             </div>
             <div className="chart-card">
-              <h4>Inventory Health</h4>
+              <h4>{t("inventoryHealth")}</h4>
               {[
-                { label: "Ready to ship", value: batches.filter(b=>b.status==="Ready").reduce((s,b)=>s+b.qty,0), color: "#3a6b4a" },
-                { label: "Aging / not ready", value: batches.filter(b=>b.status==="Aging").reduce((s,b)=>s+b.qty,0), color: "#c9a84c" },
-                { label: "Low stock", value: batches.filter(b=>b.status==="Low Stock").reduce((s,b)=>s+b.qty,0), color: "#8b3a3a" },
+                { label: t("ready"), value: batches.filter(b=>b.status==="Ready").reduce((s,b)=>s+b.qty,0), color: "#3a6b4a" },
+                { label: t("aging"), value: batches.filter(b=>b.status==="Aging").reduce((s,b)=>s+b.qty,0), color: "#c9a84c" },
+                { label: t("lowStock"), value: batches.filter(b=>b.status==="Low Stock").reduce((s,b)=>s+b.qty,0), color: "#8b3a3a" },
               ].map((row, i) => (
                 <div className="hbar-row" key={i}>
                   <div className="hbar-name">{row.label}</div>
@@ -1294,12 +1308,12 @@ function Analytics({ batches, transactions, clients, invoices }) {
         <div className="two-col">
           <div>
             <div className="chart-card">
-              <h4>Top Clients by Bottles Shipped</h4>
+              <h4>{t("topClientsByVolume")}</h4>
               <HBar items={topClients} max={maxClient} colorFn={i => countryColors[i % countryColors.length]} />
             </div>
             <div className="chart-card">
-              <h4>Clients by Type</h4>
-              <DonutChart segments={[
+              <h4>{t("clientTypeMix")}</h4>
+              <DonutChart t={t} segments={[
                 { label: "Restaurant", value: clients.filter(c=>c.type==="Restaurant").length, color: "#a090d0" },
                 { label: "Distributor", value: clients.filter(c=>c.type==="Distributor").length, color: "#80b0d4" },
                 { label: "Retailer", value: clients.filter(c=>c.type==="Retailer").length, color: "#c4a060" },
@@ -1309,11 +1323,11 @@ function Analytics({ batches, transactions, clients, invoices }) {
           </div>
           <div>
             <div className="chart-card">
-              <h4>Client Status Overview</h4>
+              <h4>{t("clientStatusOverview")}</h4>
               {[
-                { label: "Active", value: clients.filter(c=>c.status==="Active").length, color: "#3a6b4a" },
-                { label: "Overdue for reorder", value: clients.filter(c=>c.status==="Overdue").length, color: "#8b3a3a" },
-                { label: "Inactive", value: clients.filter(c=>c.status==="Inactive").length, color: "#4a4030" },
+                { label: t("active"), value: clients.filter(c=>c.status==="Active").length, color: "#3a6b4a" },
+                { label: t("activeOverdueReorder"), value: clients.filter(c=>c.status==="Overdue").length, color: "#8b3a3a" },
+                { label: t("inactive"), value: clients.filter(c=>c.status==="Inactive").length, color: "#4a4030" },
               ].map((row, i) => (
                 <div className="hbar-row" key={i}>
                   <div className="hbar-name">{row.label}</div>
@@ -1323,10 +1337,10 @@ function Analytics({ batches, transactions, clients, invoices }) {
               ))}
             </div>
             <div className="chart-card">
-              <h4>EU vs Export Split (Bottles)</h4>
-              <DonutChart segments={[
-                { label: "EU clients", value: clients.filter(c=>isEU(c.country)).reduce((s,c)=>s+c.totalBottles,0), color: "#8898e0" },
-                { label: "Export clients", value: clients.filter(c=>!isEU(c.country)).reduce((s,c)=>s+c.totalBottles,0), color: "#c4a060" },
+              <h4>{t("euExportSplit")}</h4>
+              <DonutChart t={t} segments={[
+                { label: t("euClients"), value: clients.filter(c=>isEU(c.country)).reduce((s,c)=>s+c.totalBottles,0), color: "#8898e0" },
+                { label: t("exportClients"), value: clients.filter(c=>!isEU(c.country)).reduce((s,c)=>s+c.totalBottles,0), color: "#c4a060" },
               ].filter(s=>s.value>0)} />
             </div>
           </div>
@@ -1338,17 +1352,17 @@ function Analytics({ batches, transactions, clients, invoices }) {
         <div className="two-col">
           <div>
             <div className="chart-card">
-              <h4>Bottles Shipped by Country</h4>
+              <h4>{t("bottlesShippedCountry")}</h4>
               <HBar items={countryData} max={maxCountry} colorFn={i => countryColors[i % countryColors.length]} />
             </div>
             <div className="chart-card">
-              <h4>Country Distribution</h4>
-              <DonutChart segments={countryData.map((c, i) => ({ ...c, color: countryColors[i % countryColors.length] }))} />
+              <h4>{t("countryDistribution")}</h4>
+              <DonutChart t={t} segments={countryData.map((c, i) => ({ ...c, color: countryColors[i % countryColors.length] }))} />
             </div>
           </div>
           <div>
             <div className="chart-card">
-              <h4>Revenue by Country</h4>
+              <h4>{t("revenueByCountry")}</h4>
               <HBar
                 items={Object.entries(
                   invoices.reduce((acc, inv) => {
@@ -1362,8 +1376,8 @@ function Analytics({ batches, transactions, clients, invoices }) {
               />
             </div>
             <div className="chart-card">
-              <h4>Pricing Tier Breakdown</h4>
-              <DonutChart segments={["Standard","Premium","Wholesale","Export"].map((tier,i)=>({
+              <h4>{t("pricingTierBreakdown")}</h4>
+              <DonutChart t={t} segments={["Standard","Premium","Wholesale","Export"].map((tier,i)=>({
                 label: tier,
                 value: clients.filter(c=>c.pricingTier===tier).length,
                 color: countryColors[i]
@@ -1546,22 +1560,22 @@ export default function App() {
           </div>
         </nav>
         <main className="main">
-          {page==="dashboard"&&<Dashboard batches={batches} transactions={transactions} clients={clients} invoices={invoices} harvests={harvests} onNav={goTo}/>}
-          {page==="inventory"&&<Inventory batches={batches} onAdd={()=>setShowAddBatch(true)} onTransaction={setTxBatch}/>}
-          {page==="transactions"&&<Transactions transactions={transactions}/>}
-          {page==="harvest"&&<Harvest harvests={harvests} onAdd={()=>setShowAddHarvest(true)}/>}
-          {page==="clients"&&!selectedClient&&<Clients clients={clients} transactions={transactions} onAdd={()=>setShowAddClient(true)} onSelect={setSelectedClient}/>}
-          {page==="clients"&&selectedClient&&<ClientProfile client={selectedClient} transactions={transactions} onBack={()=>setSelectedClient(null)}/>}
-          {page==="reminders"&&<Reminders clients={clients}/>}
-          {page==="invoices"&&<Invoices invoices={invoices} clients={clients} onMarkPaid={id=>setInvoices(p=>p.map(i=>i.id===id?{...i,status:"Paid"}:i))} onView={setViewInvoice}/>}
-          {page==="analytics"&&<Analytics batches={batches} transactions={transactions} clients={clients} invoices={invoices}/>}
+          {page==="dashboard"&&<Dashboard batches={batches} transactions={transactions} clients={clients} invoices={invoices} harvests={harvests} onNav={goTo} t={t}/>}
+          {page==="inventory"&&<Inventory batches={batches} onAdd={()=>setShowAddBatch(true)} onTransaction={setTxBatch} t={t}/>}
+          {page==="transactions"&&<Transactions transactions={transactions} t={t}/>}
+          {page==="harvest"&&<Harvest harvests={harvests} onAdd={()=>setShowAddHarvest(true)} t={t}/>}
+          {page==="clients"&&!selectedClient&&<Clients clients={clients} transactions={transactions} onAdd={()=>setShowAddClient(true)} onSelect={setSelectedClient} t={t}/>}
+          {page==="clients"&&selectedClient&&<ClientProfile client={selectedClient} transactions={transactions} onBack={()=>setSelectedClient(null)} t={t}/>}
+          {page==="reminders"&&<Reminders clients={clients} t={t}/>}
+          {page==="invoices"&&<Invoices invoices={invoices} clients={clients} onMarkPaid={id=>setInvoices(p=>p.map(i=>i.id===id?{...i,status:"Paid"}:i))} onView={setViewInvoice} t={t}/>}
+          {page==="analytics"&&<Analytics batches={batches} transactions={transactions} clients={clients} invoices={invoices} t={t}/>}
         </main>
       </div>
-      {showAddBatch&&<AddBatchModal onClose={()=>setShowAddBatch(false)} onSave={b=>{setBatches(p=>[b,...p]);}}/>}
-      {showAddClient&&<AddClientModal onClose={()=>setShowAddClient(false)} onSave={c=>{setClients(p=>[c,...p]);}}/>}
-      {showAddHarvest&&<AddHarvestModal onClose={()=>setShowAddHarvest(false)} onSave={h=>{setHarvests(p=>[h,...p]);}}/>}
-      {txBatch&&<LogTransactionModal batch={txBatch} clients={clients} onClose={()=>setTxBatch(null)} onSave={addTransaction}/>}
-      {viewInvoice&&<InvoiceModal invoice={viewInvoice} onClose={()=>setViewInvoice(null)}/>}
+      {showAddBatch&&<AddBatchModal onClose={()=>setShowAddBatch(false)} onSave={b=>{setBatches(p=>[b,...p]);}} t={t}/>}
+      {showAddClient&&<AddClientModal onClose={()=>setShowAddClient(false)} onSave={c=>{setClients(p=>[c,...p]);}} t={t}/>}
+      {showAddHarvest&&<AddHarvestModal onClose={()=>setShowAddHarvest(false)} onSave={h=>{setHarvests(p=>[h,...p]);}} t={t}/>}
+      {txBatch&&<LogTransactionModal batch={txBatch} clients={clients} onClose={()=>setTxBatch(null)} onSave={addTransaction} t={t}/>}
+      {viewInvoice&&<InvoiceModal invoice={viewInvoice} onClose={()=>setViewInvoice(null)} t={t}/>}
     </>
   );
 }
