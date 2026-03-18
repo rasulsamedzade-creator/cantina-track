@@ -332,6 +332,216 @@ const stageIndex = s => ({Harvest:0,Fermenting:1,Aging:2,Bottled:3})[s]??-1;
 function qrCells(str){let h=0;for(let i=0;i<str.length;i++)h=((h<<5)-h+str.charCodeAt(i))|0;return Array.from({length:16},(_,i)=>((h>>i)&1)===0);}
 function QRBox({id}){const c=qrCells(id);return <div className="qr-box">{c.map((w,i)=><div key={i} className={`qr-cell${w?" w":""}`}/>)}</div>;}
 
+// ── Translations ─────────────────────────────────────────────────────────────
+const TRANSLATIONS = {
+  en: {
+    // Sidebar nav
+    dashboard: "Dashboard", batches: "Batches", transactions: "Transactions",
+    harvestLog: "Harvest Log", allClients: "All Clients", reminders: "Reminders",
+    invoices: "Invoices", analytics: "Analytics",
+    // Sidebar nav sections
+    inventory: "INVENTORY", clientsSection: "CLIENTS", finance: "FINANCE",
+    // Workspace
+    workspace: "Workspace", demo: "Demo", myWinery: "My Winery", reset: "RESET",
+    // Dashboard
+    cantinaOverview: "Cantina Overview", dashboardSub: "DASHBOARD",
+    totalBottles: "Total Bottles", activeClients: "Active Clients",
+    pendingRevenue: "Pending Revenue", alerts: "Alerts",
+    activeLots: "active lots", totalAccounts: "total accounts",
+    openInvoices: "open invoices", stockClient: "stock + client",
+    recentTransactions: "Recent Transactions", recentInvoices: "Recent Invoices",
+    reorderReminders: "Reorder Reminders", harvestActivity: "Harvest Activity",
+    viewAll: "View All", noHarvests: "No harvests yet. Log your first harvest from Harvest Log.",
+    noTransactions: "No transactions yet",
+    // Inventory
+    batchInventory: "Batch Inventory", allLotsSub: "ALL LOTS — BOTTLE STOCK BY BATCH",
+    newBatch: "+ New Batch", searchBatches: "Search batches…", allTypes: "All Types",
+    lotId: "Lot ID", wine: "Wine", type: "Type", vintage: "Vintage",
+    location: "Location", bottles: "Bottles", status: "Status", qr: "QR",
+    ship: "Ship", noBatches: "No batches found",
+    // Transactions
+    transactionLog: "Transaction Log", auditTrail: "FULL AUDIT TRAIL",
+    // Invoices
+    billingSub: "BILLING — REVENUE TRACKING", paidRevenue: "Paid Revenue",
+    outstanding: "Outstanding", totalInvoiced: "Total Invoiced",
+    pending: "pending", allTime: "all time",
+    searchInvoices: "Search by client or invoice number…",
+    invoiceNum: "Invoice #", client: "Client", qty: "Qty", amount: "Amount",
+    date: "Date", due: "Due", view: "View", markPaid: "Mark Paid",
+    noInvoices: "No invoices found",
+    // Invoice modal
+    from: "From", to: "To", description: "Description", quantity: "Quantity",
+    unitPrice: "Unit Price", total: "Total", subtotal: "Subtotal",
+    vat: "VAT", seeNote: "See note", totalDue: "Total Due",
+    paymentTerms: "Payment terms: 30 days",
+    close: "Close",
+    // Reminders
+    reorderRemindersFull: "Reorder Reminders", followUpSub: "CLIENT FOLLOW-UP TRACKER",
+    overdue: "Overdue", dueSoon: "Due Soon", onTrack: "On Track",
+    needsFollowUp: "needs immediate follow-up", approachingWindow: "approaching reorder window",
+    noActionNeeded: "no action needed",
+    overdueContactNow: "⚠ Overdue — Contact Now",
+    // Harvest
+    harvestProduction: "Harvest & Production", wineLogSub: "WINEMAKING LOGBOOK",
+    newHarvest: "+ New Harvest", activeProductions: "Active Productions",
+    totalKgHarvested: "Total Kg Harvested", expectedBottles: "Expected Bottles",
+    totalRecords: "total records", thisLogbook: "this logbook", inPipeline: "in pipeline",
+    harvestData: "Harvest Data", productionTimeline: "Production Timeline",
+    kgHarvested: "Kg Harvested", brix: "Brix °", ph: "pH",
+    agingVessel: "Aging Vessel", expectedBottling: "Expected Bottling",
+    noHarvestsYet: "No harvests logged yet",
+    back: "← Back",
+    // Clients
+    clients: "Clients", allAccountsSub: "ALL ACCOUNTS",
+    newClient: "+ New Client", searchClients: "Search clients…",
+    totalAccountsStat: "Total Accounts", totalBottlesShipped: "Total Bottles Shipped",
+    overdueReorders: "Overdue Reorders", active: "active", lifetime: "lifetime",
+    needFollowUp: "need follow-up", shipped: "Shipped", orders: "Orders", lastOrder: "Last Order",
+    noClients: "No clients found",
+    // Client profile
+    contactDetails: "Contact Details", orderHistory: "Order History",
+    daysSinceOrder: "Days Since Order", pricingTier: "Pricing Tier",
+    lifetimeShipped: "lifetime shipped", last: "last",
+    email: "Email", phone: "Phone", country: "Country", city: "City",
+    reorderInterval: "Reorder Interval", notes: "Notes",
+    // Modals
+    newBatchTitle: "New Batch / Lot", wineName: "Wine Name",
+    vintageYear: "Vintage Year", grapeVarieties: "Grape Varieties",
+    vineyardPlot: "Vineyard Plot", bottlesFilled: "Bottles Filled",
+    storageLocation: "Storage Location", cancel: "Cancel", createBatch: "Create Batch",
+    newClientTitle: "New Client", clientName: "Client Name",
+    contactPerson: "Contact Person", reorderIntervalDays: "Reorder Interval (days)",
+    saveClient: "Save Client",
+    logNewHarvest: "Log New Harvest", grapeVariety: "Grape Variety",
+    harvestDate: "Harvest Date", fermentationStart: "Fermentation Start",
+    currentStage: "Current Stage", observations: "Observations, quality notes…",
+    logHarvest: "Log Harvest",
+    logTransaction: "Log Transaction", transactionType: "Transaction Type",
+    clientRequired: "Client (required for shipments)", selectClient: "— Select a client —",
+    quantityBottles: "Quantity (bottles)", note: "Note", staffName: "Staff Name",
+    logAndGenerate: "Log & Generate Invoice", btlAvailable: "btl available",
+    inbound: "Inbound (add stock)", outbound: "Outbound (shipment)",
+    writeOff: "Write-off (breakage/tasting)", internalMove: "Internal Move",
+    invoiceAutoGenerated: "An invoice will be auto-generated on save.",
+    orderValue: "Order value",
+    // Analytics
+    analyticsReports: "Analytics & Reports", biSub: "BUSINESS INTELLIGENCE — 2024 DATA",
+    revenue: "Revenue", inventoryTab: "Inventory", clientsTab: "Clients", geography: "Geography",
+    totalRevenueStat: "Total Revenue", pendingRevenueStat: "Pending Revenue",
+    bottlesShipped: "Bottles Shipped", avgOrderValue: "Avg Order Value",
+    activeClientsStat: "Active Clients", totalStock: "Total Stock",
+    monthlyRevenue: "Monthly Revenue (Paid)", revenueTrend: "Revenue Trend",
+    revenueByClient: "Revenue by Client", invoiceStatus: "Invoice Status",
+    bottlesShippedMonth: "Bottles Shipped by Month", stockByWineType: "Stock by Wine Type",
+    currentStockLevels: "Current Stock Levels", inventoryHealth: "Inventory Health",
+    topClientsByVolume: "Top Clients by Volume", clientTypeMix: "Client Type Mix",
+    clientStatusOverview: "Client Status Overview", euExportSplit: "EU vs Export Split (Bottles)",
+    bottlesShippedCountry: "Bottles Shipped by Country", countryDistribution: "Country Distribution",
+    revenueByCountry: "Revenue by Country", pricingTierBreakdown: "Pricing Tier Breakdown",
+    ready: "Ready", lowStock: "Low Stock", aging: "Aging",
+    paid: "Paid", activeOverdueReorder: "Overdue for reorder", inactive: "Inactive",
+    euClients: "EU clients", exportClients: "Export clients",
+    writeOffs: "Write-offs", inStock: "in stock", totalActive: "total active",
+    bottlesInLots: "bottles in lots",
+  },
+  it: {
+    dashboard: "Pannello", batches: "Lotti", transactions: "Movimenti",
+    harvestLog: "Registro Vendemmia", allClients: "Tutti i Clienti", reminders: "Promemoria",
+    invoices: "Fatture", analytics: "Statistiche",
+    inventory: "INVENTARIO", clientsSection: "CLIENTI", finance: "FINANZA",
+    workspace: "Area di Lavoro", demo: "Demo", myWinery: "La Mia Cantina", reset: "RESET",
+    cantinaOverview: "Panoramica Cantina", dashboardSub: "PANNELLO",
+    totalBottles: "Bottiglie Totali", activeClients: "Clienti Attivi",
+    pendingRevenue: "Entrate in Sospeso", alerts: "Avvisi",
+    activeLots: "lotti attivi", totalAccounts: "conti totali",
+    openInvoices: "fatture aperte", stockClient: "scorte + clienti",
+    recentTransactions: "Movimenti Recenti", recentInvoices: "Fatture Recenti",
+    reorderReminders: "Promemoria Riordini", harvestActivity: "Attività Vendemmia",
+    viewAll: "Vedi Tutto", noHarvests: "Nessuna vendemmia. Registra la tua prima vendemmia dal Registro Vendemmia.",
+    noTransactions: "Nessun movimento ancora",
+    batchInventory: "Inventario Lotti", allLotsSub: "TUTTI I LOTTI — SCORTE PER LOTTO",
+    newBatch: "+ Nuovo Lotto", searchBatches: "Cerca lotti…", allTypes: "Tutti i Tipi",
+    lotId: "ID Lotto", wine: "Vino", type: "Tipo", vintage: "Annata",
+    location: "Posizione", bottles: "Bottiglie", status: "Stato", qr: "QR",
+    ship: "Spedisci", noBatches: "Nessun lotto trovato",
+    transactionLog: "Registro Movimenti", auditTrail: "TRACCIA COMPLETA",
+    billingSub: "FATTURAZIONE — MONITORAGGIO ENTRATE", paidRevenue: "Entrate Pagate",
+    outstanding: "In Sospeso", totalInvoiced: "Totale Fatturato",
+    pending: "in sospeso", allTime: "totale",
+    searchInvoices: "Cerca per cliente o numero fattura…",
+    invoiceNum: "N° Fattura", client: "Cliente", qty: "Qtà", amount: "Importo",
+    date: "Data", due: "Scadenza", view: "Vedi", markPaid: "Segna Pagata",
+    noInvoices: "Nessuna fattura trovata",
+    from: "Da", to: "A", description: "Descrizione", quantity: "Quantità",
+    unitPrice: "Prezzo Unitario", total: "Totale", subtotal: "Subtotale",
+    vat: "IVA", seeNote: "Vedi nota", totalDue: "Totale Dovuto",
+    paymentTerms: "Termini di pagamento: 30 giorni",
+    close: "Chiudi",
+    reorderRemindersFull: "Promemoria Riordini", followUpSub: "MONITORAGGIO FOLLOW-UP CLIENTI",
+    overdue: "In Ritardo", dueSoon: "In Scadenza", onTrack: "In Regola",
+    needsFollowUp: "necessita follow-up immediato", approachingWindow: "prossimo alla finestra di riordino",
+    noActionNeeded: "nessuna azione necessaria",
+    overdueContactNow: "⚠ In Ritardo — Contattare Ora",
+    harvestProduction: "Vendemmia e Produzione", wineLogSub: "REGISTRO DI VINIFICAZIONE",
+    newHarvest: "+ Nuova Vendemmia", activeProductions: "Produzioni Attive",
+    totalKgHarvested: "Kg Totali Raccolti", expectedBottles: "Bottiglie Previste",
+    totalRecords: "registri totali", thisLogbook: "questo registro", inPipeline: "in lavorazione",
+    harvestData: "Dati Vendemmia", productionTimeline: "Cronologia Produzione",
+    kgHarvested: "Kg Raccolti", brix: "Brix °", ph: "pH",
+    agingVessel: "Recipiente Invecchiamento", expectedBottling: "Imbottigliamento Previsto",
+    noHarvestsYet: "Nessuna vendemmia registrata",
+    back: "← Indietro",
+    clients: "Clienti", allAccountsSub: "TUTTI I CONTI",
+    newClient: "+ Nuovo Cliente", searchClients: "Cerca clienti…",
+    totalAccountsStat: "Conti Totali", totalBottlesShipped: "Bottiglie Totali Spedite",
+    overdueReorders: "Riordini in Ritardo", active: "attivi", lifetime: "totale",
+    needFollowUp: "necessitano follow-up", shipped: "Spedite", orders: "Ordini", lastOrder: "Ultimo Ordine",
+    noClients: "Nessun cliente trovato",
+    contactDetails: "Dettagli Contatto", orderHistory: "Storico Ordini",
+    daysSinceOrder: "Giorni dall'Ultimo Ordine", pricingTier: "Fascia di Prezzo",
+    lifetimeShipped: "spedite totali", last: "ultimo",
+    email: "Email", phone: "Telefono", country: "Paese", city: "Città",
+    reorderInterval: "Intervallo Riordino", notes: "Note",
+    newBatchTitle: "Nuovo Lotto", wineName: "Nome Vino",
+    vintageYear: "Anno di Annata", grapeVarieties: "Varietà di Uva",
+    vineyardPlot: "Parcella Vigneto", bottlesFilled: "Bottiglie Riempite",
+    storageLocation: "Posizione di Stoccaggio", cancel: "Annulla", createBatch: "Crea Lotto",
+    newClientTitle: "Nuovo Cliente", clientName: "Nome Cliente",
+    contactPerson: "Persona di Contatto", reorderIntervalDays: "Intervallo Riordino (giorni)",
+    saveClient: "Salva Cliente",
+    logNewHarvest: "Registra Nuova Vendemmia", grapeVariety: "Varietà di Uva",
+    harvestDate: "Data Vendemmia", fermentationStart: "Inizio Fermentazione",
+    currentStage: "Fase Attuale", observations: "Osservazioni, note qualitative…",
+    logHarvest: "Registra Vendemmia",
+    logTransaction: "Registra Movimento", transactionType: "Tipo Movimento",
+    clientRequired: "Cliente (obbligatorio per spedizioni)", selectClient: "— Seleziona un cliente —",
+    quantityBottles: "Quantità (bottiglie)", note: "Nota", staffName: "Nome Operatore",
+    logAndGenerate: "Registra e Genera Fattura", btlAvailable: "btl disponibili",
+    inbound: "Entrata (aggiunta scorte)", outbound: "Uscita (spedizione)",
+    writeOff: "Scarico (rottura/degustazione)", internalMove: "Movimento Interno",
+    invoiceAutoGenerated: "Una fattura verrà generata automaticamente al salvataggio.",
+    orderValue: "Valore ordine",
+    analyticsReports: "Statistiche e Report", biSub: "BUSINESS INTELLIGENCE — DATI 2024",
+    revenue: "Entrate", inventoryTab: "Inventario", clientsTab: "Clienti", geography: "Geografia",
+    totalRevenueStat: "Entrate Totali", pendingRevenueStat: "Entrate in Sospeso",
+    bottlesShipped: "Bottiglie Spedite", avgOrderValue: "Valore Medio Ordine",
+    activeClientsStat: "Clienti Attivi", totalStock: "Scorte Totali",
+    monthlyRevenue: "Entrate Mensili (Pagate)", revenueTrend: "Trend Entrate",
+    revenueByClient: "Entrate per Cliente", invoiceStatus: "Stato Fatture",
+    bottlesShippedMonth: "Bottiglie Spedite per Mese", stockByWineType: "Scorte per Tipo di Vino",
+    currentStockLevels: "Livelli Scorte Attuali", inventoryHealth: "Salute Inventario",
+    topClientsByVolume: "Migliori Clienti per Volume", clientTypeMix: "Mix Tipo Clienti",
+    clientStatusOverview: "Panoramica Stato Clienti", euExportSplit: "Divisione UE vs Export (Bottiglie)",
+    bottlesShippedCountry: "Bottiglie Spedite per Paese", countryDistribution: "Distribuzione per Paese",
+    revenueByCountry: "Entrate per Paese", pricingTierBreakdown: "Ripartizione Fasce di Prezzo",
+    ready: "Pronto", lowStock: "Scorte Basse", aging: "Invecchiamento",
+    paid: "Pagata", activeOverdueReorder: "Riordino in ritardo", inactive: "Inattivo",
+    euClients: "Clienti UE", exportClients: "Clienti Export",
+    writeOffs: "Scarichi", inStock: "in magazzino", totalActive: "totali attivi",
+    bottlesInLots: "bottiglie nei lotti",
+  }
+};
+
 function computeReminders(clients) {
   return clients.map(c => {
     const days = daysSince(c.lastOrder);
@@ -1170,7 +1380,8 @@ function Analytics({ batches, transactions, clients, invoices }) {
 const STORAGE_KEYS = {
   demo: "cantina-track-demo",
   blank: "cantina-track-blank",
-  mode: "cantina-track-mode"
+  mode: "cantina-track-mode",
+  lang: "cantina-track-lang"
 };
 
 const EMPTY_DATA = { batches: [], transactions: [], clients: [], invoices: [], harvests: [] };
@@ -1182,6 +1393,16 @@ function loadMode() {
 
 function saveMode(mode) {
   try { localStorage.setItem(STORAGE_KEYS.mode, mode); }
+  catch(e) {}
+}
+
+function loadLang() {
+  try { return localStorage.getItem(STORAGE_KEYS.lang) || "en"; }
+  catch(e) { return "en"; }
+}
+
+function saveLang(lang) {
+  try { localStorage.setItem(STORAGE_KEYS.lang, lang); }
   catch(e) {}
 }
 
@@ -1211,6 +1432,8 @@ function getDefaults(mode) {
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [mode, setMode] = useState(loadMode);
+  const [lang, setLang] = useState(loadLang);
+  const t = (key) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en[key] || key;
   const [page,setPage]=useState("dashboard");
   const [batches,setBatches]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.batches || d.batches; });
   const [transactions,setTransactions]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.transactions || d.transactions; });
@@ -1272,15 +1495,21 @@ export default function App() {
   const overdueReminders=computeReminders(clients).filter(c=>c.urgency==="red").length;
 
   const nav=[
-    {section:null,id:"dashboard",icon:"◈",label:"Dashboard"},
-    {section:"INVENTORY",id:"inventory",icon:"⊟",label:"Batches"},
-    {section:null,id:"transactions",icon:"⇄",label:"Transactions"},
-    {section:null,id:"harvest",icon:"🍇",label:"Harvest Log"},
-    {section:"CLIENTS",id:"clients",icon:"◉",label:"All Clients"},
-    {section:null,id:"reminders",icon:"⏰",label:"Reminders",badge:overdueReminders>0?overdueReminders:null},
-    {section:"FINANCE",id:"invoices",icon:"◻",label:"Invoices"},
-    {section:null,id:"analytics",icon:"◫",label:"Analytics"},
+    {section:null,id:"dashboard",icon:"◈",label:t("dashboard")},
+    {section:t("inventory"),id:"inventory",icon:"⊟",label:t("batches")},
+    {section:null,id:"transactions",icon:"⇄",label:t("transactions")},
+    {section:null,id:"harvest",icon:"🍇",label:t("harvestLog")},
+    {section:t("clientsSection"),id:"clients",icon:"◉",label:t("allClients")},
+    {section:null,id:"reminders",icon:"⏰",label:t("reminders"),badge:overdueReminders>0?overdueReminders:null},
+    {section:t("finance"),id:"invoices",icon:"◻",label:t("invoices")},
+    {section:null,id:"analytics",icon:"◫",label:t("analytics")},
   ];
+
+  const toggleLang = () => {
+    const newLang = lang === "en" ? "it" : "en";
+    setLang(newLang);
+    saveLang(newLang);
+  };
 
   return (
     <>
@@ -1299,15 +1528,20 @@ export default function App() {
               </div>
             ))}
           </div>
-          <div className="mode-label">Workspace</div>
+          <div className="mode-label">{t("workspace")}</div>
           <div className="mode-toggle">
-            <button className={`mode-btn${mode==="demo"?" active":""}`} onClick={()=>switchMode("demo")}>Demo</button>
-            <button className={`mode-btn${mode==="blank"?" active":""}`} onClick={()=>switchMode("blank")}>My Winery</button>
+            <button className={`mode-btn${mode==="demo"?" active":""}`} onClick={()=>switchMode("demo")}>{t("demo")}</button>
+            <button className={`mode-btn${mode==="blank"?" active":""}`} onClick={()=>switchMode("blank")}>{t("myWinery")}</button>
+          </div>
+          <div className="mode-label" style={{marginTop:8}}>Lingua / Language</div>
+          <div className="mode-toggle">
+            <button className={`mode-btn${lang==="en"?" active":""}`} onClick={()=>{setLang("en");saveLang("en");}}>EN</button>
+            <button className={`mode-btn${lang==="it"?" active":""}`} onClick={()=>{setLang("it");saveLang("it");}}>IT</button>
           </div>
           <div className="sidebar-footer">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span>v0.5.0 · {mode==="demo"?"DEMO":"MY WINERY"}</span>
-              <button onClick={resetCurrentMode} style={{background:"none",border:"1px solid var(--border)",borderRadius:4,color:"var(--muted)",fontFamily:"var(--font-mono)",fontSize:".55rem",padding:"3px 8px",cursor:"pointer",letterSpacing:".08em"}}>RESET</button>
+              <span>v0.6.0 · {mode==="demo"?"DEMO":t("myWinery").toUpperCase()}</span>
+              <button onClick={resetCurrentMode} style={{background:"none",border:"1px solid var(--border)",borderRadius:4,color:"var(--muted)",fontFamily:"var(--font-mono)",fontSize:".55rem",padding:"3px 8px",cursor:"pointer",letterSpacing:".08em"}}>{t("reset")}</button>
             </div>
           </div>
         </nav>
