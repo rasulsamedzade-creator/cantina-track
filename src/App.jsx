@@ -346,7 +346,7 @@ function computeReminders(clients) {
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
-function Dashboard({ batches, transactions, clients, invoices, onNav }) {
+function Dashboard({ batches, transactions, clients, invoices, harvests, onNav }) {
   const totalBottles = batches.reduce((s,b)=>s+b.qty,0);
   const lowStock = batches.filter(b=>b.qty<300).length;
   const overdueClients = clients.filter(c=>c.status==="Overdue").length;
@@ -393,7 +393,9 @@ function Dashboard({ batches, transactions, clients, invoices, onNav }) {
           ))}
           <div className="section-title" style={{marginTop:8}}>Harvest Activity <button className="btn btn-ghost btn-sm" onClick={()=>onNav("harvest")}>View All</button></div>
           <div className="table-wrap">
-            {SEED_HARVESTS.slice(0,3).map(h=>(
+            {harvests.length === 0 ? (
+              <div className="empty" style={{padding:20}}>No harvests yet. Log your first harvest from Harvest Log.</div>
+            ) : harvests.slice(0,3).map(h=>(
               <div className="tx-item" key={h.id}>
                 <div className="tx-info"><div className="tx-title">{h.grape} <span className="text-muted">— {h.plot}</span></div><div className="tx-meta">{h.vintage} · Harvest {h.harvestDate} · {h.kgHarvested.toLocaleString()}kg</div></div>
                 <span className={`badge ${harvestStageColor(h.stage)}`}>{h.stage}</span>
@@ -1310,7 +1312,7 @@ export default function App() {
           </div>
         </nav>
         <main className="main">
-          {page==="dashboard"&&<Dashboard batches={batches} transactions={transactions} clients={clients} invoices={invoices} onNav={goTo}/>}
+          {page==="dashboard"&&<Dashboard batches={batches} transactions={transactions} clients={clients} invoices={invoices} harvests={harvests} onNav={goTo}/>}
           {page==="inventory"&&<Inventory batches={batches} onAdd={()=>setShowAddBatch(true)} onTransaction={setTxBatch}/>}
           {page==="transactions"&&<Transactions transactions={transactions}/>}
           {page==="harvest"&&<Harvest harvests={harvests} onAdd={()=>setShowAddHarvest(true)}/>}
