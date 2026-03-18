@@ -31,6 +31,13 @@ const GlobalStyle = () => (
     .nav-badge { margin-left: auto; background: var(--danger); color: #fff; font-family: var(--font-mono); font-size: .55rem; border-radius: 10px; padding: 2px 6px; }
     .sidebar-footer { padding: 14px 22px; border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: .6rem; color: var(--muted); letter-spacing: .1em; }
 
+    /* Mode toggle */
+    .mode-toggle { margin: 0 14px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 4px; display: flex; gap: 0; }
+    .mode-btn { flex: 1; padding: 7px 6px; border: none; background: none; color: var(--muted); font-family: var(--font-mono); font-size: .55rem; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border-radius: 5px; transition: all .15s; text-align: center; }
+    .mode-btn:hover { color: var(--cream); }
+    .mode-btn.active { background: var(--gold); color: var(--bg); font-weight: 400; }
+    .mode-label { font-family: var(--font-mono); font-size: .5rem; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); text-align: center; margin: 0 14px 6px; opacity: .5; }
+
     /* Main */
     .main { flex: 1; padding: 36px 44px; overflow-y: auto; max-width: calc(100vw - 230px); }
     .page-header { margin-bottom: 32px; display: flex; align-items: flex-end; justify-content: space-between; }
@@ -1158,11 +1165,27 @@ function Analytics({ batches, transactions, clients, invoices }) {
 }
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
-const STORAGE_KEY = "cantina-track-data";
+const STORAGE_KEYS = {
+  demo: "cantina-track-demo",
+  blank: "cantina-track-blank",
+  mode: "cantina-track-mode"
+};
 
-function loadData() {
+const EMPTY_DATA = { batches: [], transactions: [], clients: [], invoices: [], harvests: [] };
+
+function loadMode() {
+  try { return localStorage.getItem(STORAGE_KEYS.mode) || "demo"; }
+  catch(e) { return "demo"; }
+}
+
+function saveMode(mode) {
+  try { localStorage.setItem(STORAGE_KEYS.mode, mode); }
+  catch(e) {}
+}
+
+function loadData(mode) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS[mode]);
     if (raw) return JSON.parse(raw);
   } catch (e) {
     console.warn("Failed to load saved data:", e);
@@ -1170,22 +1193,28 @@ function loadData() {
   return null;
 }
 
-function saveData(data) {
+function saveData(mode, data) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEYS[mode], JSON.stringify(data));
   } catch (e) {
     console.warn("Failed to save data:", e);
   }
 }
 
+function getDefaults(mode) {
+  if (mode === "blank") return EMPTY_DATA;
+  return { batches: SEED_BATCHES, transactions: SEED_TRANSACTIONS, clients: SEED_CLIENTS, invoices: SEED_INVOICES, harvests: SEED_HARVESTS };
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [mode, setMode] = useState(loadMode);
   const [page,setPage]=useState("dashboard");
-  const [batches,setBatches]=useState(()=>{ const s=loadData(); return s?.batches || SEED_BATCHES; });
-  const [transactions,setTransactions]=useState(()=>{ const s=loadData(); return s?.transactions || SEED_TRANSACTIONS; });
-  const [clients,setClients]=useState(()=>{ const s=loadData(); return s?.clients || SEED_CLIENTS; });
-  const [invoices,setInvoices]=useState(()=>{ const s=loadData(); return s?.invoices || SEED_INVOICES; });
-  const [harvests,setHarvests]=useState(()=>{ const s=loadData(); return s?.harvests || SEED_HARVESTS; });
+  const [batches,setBatches]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.batches || d.batches; });
+  const [transactions,setTransactions]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.transactions || d.transactions; });
+  const [clients,setClients]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.clients || d.clients; });
+  const [invoices,setInvoices]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.invoices || d.invoices; });
+  const [harvests,setHarvests]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.harvests || d.harvests; });
   const [showAddBatch,setShowAddBatch]=useState(false);
   const [showAddClient,setShowAddClient]=useState(false);
   const [showAddHarvest,setShowAddHarvest]=useState(false);
@@ -1195,17 +1224,37 @@ export default function App() {
 
   // Save to localStorage whenever data changes
   useEffect(() => {
-    saveData({ batches, transactions, clients, invoices, harvests });
-  }, [batches, transactions, clients, invoices, harvests]);
+    saveData(mode, { batches, transactions, clients, invoices, harvests });
+  }, [batches, transactions, clients, invoices, harvests, mode]);
 
-  const resetAllData = () => {
-    if (window.confirm("Reset all data to defaults? This cannot be undone.")) {
-      localStorage.removeItem(STORAGE_KEY);
-      setBatches(SEED_BATCHES);
-      setTransactions(SEED_TRANSACTIONS);
-      setClients(SEED_CLIENTS);
-      setInvoices(SEED_INVOICES);
-      setHarvests(SEED_HARVESTS);
+  const switchMode = (newMode) => {
+    if (newMode === mode) return;
+    // Save current data before switching
+    saveData(mode, { batches, transactions, clients, invoices, harvests });
+    // Switch
+    saveMode(newMode);
+    setMode(newMode);
+    const saved = loadData(newMode);
+    const defaults = getDefaults(newMode);
+    setBatches(saved?.batches || defaults.batches);
+    setTransactions(saved?.transactions || defaults.transactions);
+    setClients(saved?.clients || defaults.clients);
+    setInvoices(saved?.invoices || defaults.invoices);
+    setHarvests(saved?.harvests || defaults.harvests);
+    setPage("dashboard");
+    setSelectedClient(null);
+  };
+
+  const resetCurrentMode = () => {
+    const label = mode === "demo" ? "demo data" : "blank workspace";
+    if (window.confirm(`Reset ${label} to defaults? This cannot be undone.`)) {
+      localStorage.removeItem(STORAGE_KEYS[mode]);
+      const defaults = getDefaults(mode);
+      setBatches(defaults.batches);
+      setTransactions(defaults.transactions);
+      setClients(defaults.clients);
+      setInvoices(defaults.invoices);
+      setHarvests(defaults.harvests);
     }
   };
 
@@ -1248,10 +1297,15 @@ export default function App() {
               </div>
             ))}
           </div>
+          <div className="mode-label">Workspace</div>
+          <div className="mode-toggle">
+            <button className={`mode-btn${mode==="demo"?" active":""}`} onClick={()=>switchMode("demo")}>Demo</button>
+            <button className={`mode-btn${mode==="blank"?" active":""}`} onClick={()=>switchMode("blank")}>My Winery</button>
+          </div>
           <div className="sidebar-footer">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span>v0.4.1 · PROTOTYPE</span>
-              <button onClick={resetAllData} style={{background:"none",border:"1px solid var(--border)",borderRadius:4,color:"var(--muted)",fontFamily:"var(--font-mono)",fontSize:".55rem",padding:"3px 8px",cursor:"pointer",letterSpacing:".08em"}}>RESET</button>
+              <span>v0.5.0 · {mode==="demo"?"DEMO":"MY WINERY"}</span>
+              <button onClick={resetCurrentMode} style={{background:"none",border:"1px solid var(--border)",borderRadius:4,color:"var(--muted)",fontFamily:"var(--font-mono)",fontSize:".55rem",padding:"3px 8px",cursor:"pointer",letterSpacing:".08em"}}>RESET</button>
             </div>
           </div>
         </nav>
