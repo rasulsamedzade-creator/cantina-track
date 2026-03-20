@@ -316,6 +316,37 @@ const SEED_HARVESTS = [
   { id:"HARV-2024-CAB", grape:"Cabernet Sauvignon", plot:"West Ridge", vintage:2024, harvestDate:"2024-10-10", kgHarvested:9800, brixAtHarvest:25.1, ph:3.55, fermentStart:"2024-10-14", fermentEnd:null, agingStart:null, agingVessel:"French Oak 500L x8", expectedBottling:"2026-04-01", expectedBottles:13000, stage:"Fermenting", notes:"Very promising. High tannin structure expected." },
 ];
 
+const SEED_BULK = [
+  { id:"BULK-2023-SAN-01", wine:"Sangiovese IGT", vintage:2023, type:"Red", grapes:"Sangiovese 100%", plot:"East Hill", liters:18000, vessel:"Flexitank", pricePerLiter:2.80, status:"Available", added:"2023-11-01", notes:"High tannin, good structure. Suitable for blending." },
+  { id:"BULK-2023-TREB-01", wine:"Trebbiano Bianco", vintage:2023, type:"White", grapes:"Trebbiano 100%", plot:"North Block", liters:9500, vessel:"IBC Tank", pricePerLiter:1.90, status:"Available", added:"2023-10-15", notes:"Fresh and neutral. Ideal for private label producers." },
+  { id:"BULK-2022-MER-01", wine:"Merlot Riserva", vintage:2022, type:"Red", grapes:"Merlot 95%", plot:"West Ridge", liters:4200, vessel:"Barrique x18", pricePerLiter:4.50, status:"Reserved", added:"2023-08-20", notes:"Premium bulk. Already reserved by Negociant Dupont." },
+  { id:"BULK-2024-ROS-01", wine:"Rosato Massa", vintage:2024, type:"Rosé", grapes:"Grenache 80% / Cinsault 20%", plot:"South Slope", liters:22000, vessel:"Tanker", pricePerLiter:1.60, status:"Available", added:"2024-02-01", notes:"Light, fresh. High volume — suited for supermarket private label." },
+];
+
+const SEED_BULK_TRANSACTIONS = [
+  { id:1, bulkId:"BULK-2023-SAN-01", wine:"Sangiovese IGT", liters:-6000, clientId:"CLI-002", clientName:"Wine Direct GmbH", date:"2024-01-20", note:"Q1 bulk shipment", pricePerLiter:2.80, vessel:"Flexitank" },
+  { id:2, bulkId:"BULK-2022-MER-01", wine:"Merlot Riserva", liters:-4200, clientId:"CLI-006", clientName:"Vino Americano LLC", date:"2024-01-28", note:"Full lot — export USA", pricePerLiter:4.50, vessel:"Barrique x18" },
+  { id:3, bulkId:"BULK-2023-TREB-01", wine:"Trebbiano Bianco", liters:-3000, clientId:"CLI-003", clientName:"The Cellar London", date:"2024-02-05", note:"Private label order", pricePerLiter:1.90, vessel:"IBC Tank" },
+];
+
+const SEED_AGENTS = [
+  { id:"AGT-001", name:"Marco Ferretti", company:"Ferretti Vini", region:"Tuscany", country:"Italy", type:"Regional Broker", contact:"marco.ferretti@ferrettivini.it", phone:"+39 055 987 654", commissionPct:8, status:"Active", since:"2021-03-01", notes:"Our strongest domestic agent. Covers Tuscany and Umbria." },
+  { id:"AGT-002", name:"Claire Beaumont", company:"Beaumont Wine Group", region:"Île-de-France", country:"France", type:"Import Broker", contact:"c.beaumont@beaumontwines.fr", phone:"+33 1 44 00 12 34", commissionPct:10, status:"Active", since:"2022-01-15", notes:"Covers Paris and northern France. Strong Michelin connections." },
+  { id:"AGT-003", name:"Heinrich Braun", company:"Braun & Partner GmbH", region:"Bavaria", country:"Germany", type:"Distributor Agent", contact:"h.braun@braunpartner.de", phone:"+49 89 456 789", commissionPct:7, status:"Active", since:"2020-06-10", notes:"Handles German wholesale. Quarterly bulk orders." },
+  { id:"AGT-004", name:"Sofia Papadopoulos", company:"Hellas Fine Wines", region:"Attica", country:"Greece", type:"Import Broker", contact:"sofia@hellasfinewines.gr", phone:"+30 210 123 456", commissionPct:9, status:"Active", since:"2023-02-01", notes:"New agent, growing fast. Athens hotel and restaurant scene." },
+  { id:"AGT-005", name:"James Whitmore", company:"Whitmore & Sons", region:"London", country:"United Kingdom", type:"Export Agent", contact:"j.whitmore@whitmorewines.co.uk", phone:"+44 20 7890 1234", commissionPct:11, status:"Inactive", since:"2019-09-01", notes:"On hold since Brexit paperwork complications." },
+];
+
+const SEED_AGENT_DEALS = [
+  { id:"DEAL-001", agentId:"AGT-001", agentName:"Marco Ferretti", batchId:"LOT-2022-RES-01", wine:"Riserva Sangiovese", type:"Bottles", qty:480, unitPrice:22, clientName:"Osteria Centrale", clientCountry:"Italy", date:"2024-01-15", status:"Completed", commission:8 },
+  { id:"DEAL-002", agentId:"AGT-001", agentName:"Marco Ferretti", batchId:"LOT-2023-CHARD-01", wine:"Chardonnay Classico", type:"Bottles", qty:240, unitPrice:14, clientName:"Hotel Brunelleschi", clientCountry:"Italy", date:"2024-02-01", status:"Completed", commission:8 },
+  { id:"DEAL-003", agentId:"AGT-002", agentName:"Claire Beaumont", batchId:"LOT-2023-ROSE-01", wine:"Rosé Provençal", type:"Bottles", qty:600, unitPrice:12, clientName:"Le Grand Véfour", clientCountry:"France", date:"2024-01-22", status:"Completed", commission:10 },
+  { id:"DEAL-004", agentId:"AGT-003", agentName:"Heinrich Braun", batchId:"LOT-2022-BRUT-01", wine:"Brut Nature", type:"Bulk", qty:8000, unitPrice:2.80, clientName:"Rewe Group", clientCountry:"Germany", date:"2024-01-28", status:"Completed", commission:7 },
+  { id:"DEAL-005", agentId:"AGT-002", agentName:"Claire Beaumont", batchId:"LOT-2022-RES-01", wine:"Riserva Sangiovese", type:"Bottles", qty:360, unitPrice:22, clientName:"Cave Augé", clientCountry:"France", date:"2024-02-10", status:"In Progress", commission:10 },
+  { id:"DEAL-006", agentId:"AGT-004", agentName:"Sofia Papadopoulos", batchId:"LOT-2023-ROSE-01", wine:"Rosé Provençal", type:"Bottles", qty:180, unitPrice:12, clientName:"Hotel Grande Bretagne", clientCountry:"Greece", date:"2024-02-14", status:"In Progress", commission:9 },
+  { id:"DEAL-007", agentId:"AGT-001", agentName:"Marco Ferretti", batchId:"LOT-2023-ROSE-01", wine:"Rosé Provençal", type:"Bottles", qty:120, unitPrice:12, clientName:"Enoteca Pitti Gola", clientCountry:"Italy", date:"2024-02-18", status:"Pending", commission:8 },
+];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const isEU = c => EU_COUNTRIES.includes(c);
 const initials = n => n.split(" ").map(w=>w[0]).slice(0,2).join("");
@@ -328,6 +359,8 @@ const clientStatusColor = s => ({Active:"badge-active",Inactive:"badge-inactive"
 const txIcon = t => ({in:{cls:"tx-in",icon:"↓"},out:{cls:"tx-out",icon:"↑"},write:{cls:"tx-write",icon:"✕"},move:{cls:"tx-move",icon:"⇄"}})[t]||{cls:"tx-move",icon:"⇄"};
 const invoiceStatusColor = s => ({Paid:"badge-paid",Pending:"badge-pending",Draft:"badge-draft"})[s]||"badge-draft";
 const harvestStageColor = s => ({Harvest:"badge-harvest",Fermenting:"badge-ferment",Aging:"badge-aging-h",Bottled:"badge-bottled"})[s]||"badge-white";
+const bulkStatusColor = s => ({Available:"badge-ok",Reserved:"badge-pending","Low":"badge-low"})[s]||"badge-white";
+const dealStatusColor = s => ({Completed:"badge-paid","In Progress":"badge-pending",Pending:"badge-aging"})[s]||"badge-white";
 const stageIndex = s => ({Harvest:0,Fermenting:1,Aging:2,Bottled:3})[s]??-1;
 function qrCells(str){let h=0;for(let i=0;i<str.length;i++)h=((h<<5)-h+str.charCodeAt(i))|0;return Array.from({length:16},(_,i)=>((h>>i)&1)===0);}
 function QRBox({id}){const c=qrCells(id);return <div className="qr-box">{c.map((w,i)=><div key={i} className={`qr-cell${w?" w":""}`}/>)}</div>;}
@@ -448,7 +481,27 @@ const TRANSLATIONS = {
     contact: "Contact", vatRegime: "VAT Regime", issued: "Issued", ref: "Ref",
     batchBelowMin: "below minimum stock", clientOverdueReorder: "overdue for reorder",
     overdueFollowUp: "Last order was {0} days ago — this client is overdue for follow-up.", dueIn: "Due in",
-    bottles: "Bottles", all: "All",
+    all: "All",
+    bulkWine: "Bulk Wine", bulkWineSub: "VINO SFUSO — LIQUID SALES BY LITRE",
+    totalHectolitres: "Total Hectolitres", availableHL: "Available (hL)", shippedHL: "Shipped (hL)",
+    estStockValue: "Est. Stock Value", liters: "Litres", hl: "hL", pricePerLiter: "Price / L",
+    pricePerHL: "Price / hL", vessel: "Vessel", shipmentHistory: "Shipment history", hideHistory: "Hide history",
+    addBulkLot: "+ Add bulk lot", noBulkLots: "No bulk lots yet", litersShort: "L",
+    shipBulk: "Ship bulk", quantityLiters: "Quantity (litres)", logBulkShipment: "Log shipment",
+    newBulkLot: "New bulk lot", bulkNotesPlaceholder: "Quality notes, blending suitability…",
+    reserved: "Reserved", available: "Available",
+    salesByType: "Sales by Type", salesByTypeSub: "REVENUE BY CUSTOMER SEGMENT",
+    combinedRevenue: "Combined revenue", bulkLitres: "Bulk litres", rankByRevenue: "All clients by revenue",
+    backToOverview: "← Back to overview", backToType: "← Back to segment", clientsInSegment: "Clients in segment",
+    bottleOrders: "Bottle orders", bulkPurchases: "Bulk purchases", invoiceList: "Invoices",
+    agents: "Agents", agentsSub: "SALES BROKERS & COMMISSION",
+    activeAgents: "Active agents", revenueViaAgents: "Revenue via agents", commissionOwed: "Commission owed",
+    activeDealsCount: "Active deals", deals: "deals", region: "Region", since: "Since",
+    dealHistory: "Deal history", commissionBreakdown: "Commission breakdown", addAgent: "+ Add agent",
+    newAgent: "New agent", agentTypeRegional: "Regional Broker", agentTypeImport: "Import Broker",
+    agentTypeExport: "Export Agent", agentTypeDistributor: "Distributor Agent", dealStatusCompleted: "Completed",
+    dealStatusProgress: "In Progress", dealStatusPending: "Pending", bottlesDeal: "Bottles", bulkDeal: "Bulk",
+    agentNameLabel: "Name", company: "Company", commissionPct: "Commission %", saveAgent: "Save agent", saveBulkLot: "Save bulk lot",
   },
   it: {
     dashboard: "Pannello", batches: "Lotti", transactions: "Movimenti",
@@ -550,7 +603,27 @@ const TRANSLATIONS = {
     contact: "Contatto", vatRegime: "Regime IVA", issued: "Emessa", ref: "Rif.",
     batchBelowMin: "sotto scorta minima", clientOverdueReorder: "in ritardo per riordino",
     overdueFollowUp: "Ultimo ordine {0} giorni fa — questo cliente è in ritardo per il follow-up.", dueIn: "Scadenza tra",
-    bottles: "Bottiglie", all: "Tutti",
+    all: "Tutti",
+    bulkWine: "Vino Sfuso", bulkWineSub: "VINO SFUSO — VENDITA ALLA LITRO",
+    totalHectolitres: "Ettolitri Totali", availableHL: "Disponibili (hL)", shippedHL: "Spediti (hL)",
+    estStockValue: "Valore Stima Scorte", liters: "Litri", hl: "hL", pricePerLiter: "Prezzo / L",
+    pricePerHL: "Prezzo / hL", vessel: "Recipiente", shipmentHistory: "Storico spedizioni", hideHistory: "Nascondi storico",
+    addBulkLot: "+ Nuovo lotto sfuso", noBulkLots: "Nessun lotto sfuso", litersShort: "L",
+    shipBulk: "Spedisci sfuso", quantityLiters: "Quantità (litri)", logBulkShipment: "Registra spedizione",
+    newBulkLot: "Nuovo lotto sfuso", bulkNotesPlaceholder: "Note qualitative, idoneità al blending…",
+    reserved: "Riservato", available: "Disponibile",
+    salesByType: "Vendite per Tipo", salesByTypeSub: "RICAVI PER SEGMENTO CLIENTI",
+    combinedRevenue: "Ricavi combinati", bulkLitres: "Litri sfusi", rankByRevenue: "Tutti i clienti per ricavo",
+    backToOverview: "← Indietro alla panoramica", backToType: "← Indietro al segmento", clientsInSegment: "Clienti nel segmento",
+    bottleOrders: "Ordini bottiglie", bulkPurchases: "Acquisti sfuso", invoiceList: "Fatture",
+    agents: "Agenti", agentsSub: "INTERMEDIARI E PROVVIGIONI",
+    activeAgents: "Agenti attivi", revenueViaAgents: "Ricavi tramite agenti", commissionOwed: "Provvigioni dovute",
+    activeDealsCount: "Trattative attive", deals: "trattative", region: "Regione", since: "Dal",
+    dealHistory: "Storico trattative", commissionBreakdown: "Ripartizione provvigioni", addAgent: "+ Nuovo agente",
+    newAgent: "Nuovo agente", agentTypeRegional: "Broker Regionale", agentTypeImport: "Broker Import",
+    agentTypeExport: "Agente Export", agentTypeDistributor: "Agente Distributore", dealStatusCompleted: "Completata",
+    dealStatusProgress: "In corso", dealStatusPending: "In attesa", bottlesDeal: "Bottiglie", bulkDeal: "Sfuso",
+    agentNameLabel: "Nome", company: "Azienda", commissionPct: "Provvigione %", saveAgent: "Salva agente", saveBulkLot: "Salva lotto sfuso",
   }
 };
 
@@ -1390,6 +1463,268 @@ function Analytics({ batches, transactions, clients, invoices, t }) {
   );
 }
 
+// ── Bulk Wine (Vino Sfuso) ────────────────────────────────────────────────────
+function ShipBulkModal({ lot, clients, onClose, onSave, t }) {
+  const [clientId,setClientId]=useState("");
+  const [liters,setLiters]=useState("");
+  const [note,setNote]=useState("");
+  const sc=clients.find(c=>c.id===clientId);
+  const L=parseFloat(liters)||0;
+  const orderVal=L*(lot.pricePerLiter||0);
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal">
+        <h3>{t("shipBulk")}</h3>
+        <div className="info-box">{lot.id} — {lot.wine} — <span>{lot.liters.toLocaleString()} {t("litersShort")} {t("available").toLowerCase()}</span></div>
+        <div className="form-group"><label>{t("client")}</label><select value={clientId} onChange={e=>setClientId(e.target.value)}><option value="">{t("selectClient")}</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name} ({c.country})</option>)}</select></div>
+        {sc&&<div className="info-box">{sc.city}, {sc.country} · {sc.type}{isEU(sc.country)?<span className="eu-flag"> EU</span>:<span className="export-flag"> Export</span>}</div>}
+        <div className="form-group"><label>{t("quantityLiters")}</label><input type="number" min="1" max={lot.liters} value={liters} onChange={e=>setLiters(e.target.value)} placeholder="e.g. 1000"/></div>
+        {sc&&L>0&&<div className="info-box">{t("orderValue")}: <span>{fmtMoney(orderVal)}</span></div>}
+        <div className="form-group"><label>{t("note")}</label><input value={note} onChange={e=>setNote(e.target.value)}/></div>
+        <div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button><button className="btn btn-gold" onClick={()=>{if(!sc||L<=0||L>lot.liters)return;onSave(lot,sc,L,note);onClose();}}>{t("logBulkShipment")}</button></div>
+      </div>
+    </div>
+  );
+}
+
+function AddBulkModal({ onClose, onSave, t }) {
+  const [form,setForm]=useState({wine:"",type:"Red",vintage:new Date().getFullYear(),plot:"",grapes:"",liters:"",pricePerLiter:"",vessel:"Flexitank",notes:""});
+  const set=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const save=()=>{if(!form.wine||!form.liters)return;const ab=form.wine.split(" ").pop().toUpperCase().slice(0,4);const id=`BULK-${form.vintage}-${ab}-${String(Math.floor(Math.random()*90+10)).padStart(2,"0")}`;onSave({id,wine:form.wine,type:form.type,vintage:parseInt(form.vintage),plot:form.plot,grapes:form.grapes,liters:parseFloat(form.liters)||0,vessel:form.vessel,pricePerLiter:parseFloat(form.pricePerLiter)||0,status:"Available",added:new Date().toISOString().slice(0,10),notes:form.notes});onClose();};
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal modal-wide">
+        <h3>{t("newBulkLot")}</h3>
+        <div className="form-row"><div className="form-group"><label>{t("wineName")}</label><input value={form.wine} onChange={e=>set("wine",e.target.value)}/></div><div className="form-group"><label>{t("type")}</label><select value={form.type} onChange={e=>set("type",e.target.value)}>{["Red","White","Rosé","Sparkling"].map(x=><option key={x}>{x}</option>)}</select></div></div>
+        <div className="form-row"><div className="form-group"><label>{t("vintageYear")}</label><input type="number" value={form.vintage} onChange={e=>set("vintage",e.target.value)}/></div><div className="form-group"><label>{t("vineyardPlot")}</label><input value={form.plot} onChange={e=>set("plot",e.target.value)}/></div></div>
+        <div className="form-group"><label>{t("grapeVarieties")}</label><input value={form.grapes} onChange={e=>set("grapes",e.target.value)}/></div>
+        <div className="form-row"><div className="form-group"><label>{t("liters")}</label><input type="number" value={form.liters} onChange={e=>set("liters",e.target.value)}/></div><div className="form-group"><label>{t("pricePerLiter")}</label><input type="number" step="0.01" value={form.pricePerLiter} onChange={e=>set("pricePerLiter",e.target.value)}/></div></div>
+        <div className="form-group"><label>{t("vessel")}</label><input value={form.vessel} onChange={e=>set("vessel",e.target.value)}/></div>
+        <div className="form-group"><label>{t("notes")}</label><textarea value={form.notes} onChange={e=>set("notes",e.target.value)} placeholder={t("bulkNotesPlaceholder")}/></div>
+        <div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button><button className="btn btn-gold" onClick={save}>{t("saveBulkLot")}</button></div>
+      </div>
+    </div>
+  );
+}
+
+function BulkWine({ bulkStock, bulkTransactions, clients, t, onAdd, onShip, showHistory, setShowHistory }) {
+  const totalL=bulkStock.reduce((s,b)=>s+b.liters,0);
+  const availL=bulkStock.filter(b=>b.status==="Available").reduce((s,b)=>s+b.liters,0);
+  const shippedL=Math.abs(bulkTransactions.reduce((s,tx)=>s+(tx.liters<0?tx.liters:0),0));
+  const estVal=bulkStock.filter(b=>b.status==="Available").reduce((s,b)=>s+b.liters*b.pricePerLiter,0);
+  return (
+    <>
+      <div className="page-header"><div className="page-header-left"><h2>{t("bulkWine")}</h2><p>{t("bulkWineSub")}</p></div><button className="btn btn-gold" onClick={onAdd}>{t("addBulkLot")}</button></div>
+      <div className="stats-grid">
+        <div className="stat-card"><div className="stat-label">{t("totalHectolitres")}</div><div className="stat-value">{(totalL/100).toFixed(1)}</div><div className="stat-sub">{totalL.toLocaleString()} {t("litersShort")}</div></div>
+        <div className="stat-card green"><div className="stat-label">{t("availableHL")}</div><div className="stat-value">{(availL/100).toFixed(1)}</div><div className="stat-sub">{availL.toLocaleString()} {t("litersShort")}</div></div>
+        <div className="stat-card gold"><div className="stat-label">{t("shippedHL")}</div><div className="stat-value">{(shippedL/100).toFixed(1)}</div><div className="stat-sub">{shippedL.toLocaleString()} {t("litersShort")}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("estStockValue")}</div><div className="stat-value" style={{fontSize:"1.35rem"}}>{fmtMoney(estVal)}</div><div className="stat-sub">{t("available")}</div></div>
+      </div>
+      <div style={{marginBottom:14}}><button className="btn btn-ghost btn-sm" onClick={()=>setShowHistory(!showHistory)}>{showHistory?t("hideHistory"):t("shipmentHistory")}</button></div>
+      {showHistory&&<div className="table-wrap" style={{marginBottom:24}}>{bulkTransactions.length===0?<div className="empty">{t("noTransactions")}</div>:bulkTransactions.map(tx=>(
+        <div className="tx-item" key={tx.id}><div className="tx-icon tx-out">↑</div><div className="tx-info"><div className="tx-title">{tx.wine} → {tx.clientName}</div><div className="tx-meta">{tx.bulkId} · {Math.abs(tx.liters).toLocaleString()} {t("litersShort")} · {tx.date}</div></div><div className="tx-qty neg">{tx.liters}</div></div>
+      ))}</div>}
+      <div className="harvest-grid">
+        {bulkStock.length===0?<div className="empty" style={{gridColumn:"1/-1"}}>{t("noBulkLots")}</div>:bulkStock.map(b=>{
+          const hl=b.liters/100; const phl=b.pricePerLiter*100;
+          return (
+            <div className="harvest-card" key={b.id}>
+              <h4>{b.wine} <span style={{fontFamily:"var(--font-mono)",fontSize:".7rem",color:"var(--muted)"}}>{b.vintage}</span></h4>
+              <div className="hc-sub">{b.plot} · {b.grapes}</div>
+              <span className={`badge ${bulkStatusColor(b.status)}`} style={{marginBottom:10,display:"inline-block"}}>{b.status}</span>
+              <div className="hc-row"><span>{t("liters")}</span><span>{b.liters.toLocaleString()}</span></div>
+              <div className="hc-row"><span>{t("hl")}</span><span>{hl.toFixed(2)}</span></div>
+              <div className="hc-row"><span>{t("pricePerLiter")}</span><span>{fmtMoney(b.pricePerLiter)}</span></div>
+              <div className="hc-row"><span>{t("pricePerHL")}</span><span>{fmtMoney(phl)}</span></div>
+              <div className="hc-row"><span>{t("vessel")}</span><span>{b.vessel}</span></div>
+              <button className="btn btn-gold btn-sm" style={{marginTop:12,width:"100%"}} disabled={b.liters<=0||b.status!=="Available"} onClick={()=>onShip(b)}>{t("ship")}</button>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// ── Sales by Customer Type ───────────────────────────────────────────────────
+const TYPES = ["Restaurant","Distributor","Retailer","Private"];
+function clientInvoiceTotal(cId, invoices){return invoices.filter(i=>i.clientId===cId).reduce((s,i)=>s+i.qty*i.unitPrice,0);}
+function clientBulkTotal(cId, bulkTx){return bulkTx.filter(x=>x.clientId===cId).reduce((s,x)=>s+Math.abs(x.liters)*x.pricePerLiter,0);}
+
+function SalesByType({ clients, transactions, invoices, bulkTransactions, t }) {
+  const [view,setView]=useState("top"); const [seg,setSeg]=useState(null); const [selClient,setSelClient]=useState(null); const [clientFrom,setClientFrom]=useState(null);
+  const clientRows=clients.map(c=>({c,btl:c.totalBottles,inv:clientInvoiceTotal(c.id,invoices),bulkL:Math.abs(bulkTransactions.filter(x=>x.clientId===c.id).reduce((s,x)=>s+x.liters,0)),rev:clientInvoiceTotal(c.id,invoices)+clientBulkTotal(c.id,bulkTransactions)})).sort((a,b)=>b.rev-a.rev);
+  const typeData=TYPES.map(ty=>{
+    const cs=clients.filter(c=>c.type===ty);
+    const rev=cs.reduce((s,c)=>s+clientInvoiceTotal(c.id,invoices)+clientBulkTotal(c.id,bulkTransactions),0);
+    const btl=cs.reduce((s,c)=>s+c.totalBottles,0);
+    const bl=cs.reduce((s,c)=>s+Math.abs(bulkTransactions.filter(x=>x.clientId===c.id).reduce((a,x)=>a+x.liters,0)),0);
+    return {ty,rev,btl,bl,cs};
+  });
+  const totalRev=typeData.reduce((s,x)=>s+x.rev,1)||1;
+  if(view==="client"&&selClient){
+    const c=selClient; const btx=transactions.filter(x=>x.clientId===c.id&&x.type==="out"); const bul=bulkTransactions.filter(x=>x.clientId===c.id); const invs=invoices.filter(i=>i.clientId===c.id);
+    return (
+      <>
+        <button className="profile-back" onClick={()=>{if(clientFrom==="top"){setView("top");}else{setView("type");}setSelClient(null);setClientFrom(null);}}>{clientFrom==="top"?t("backToOverview"):t("backToType")}</button>
+        <div className="page-header"><div className="page-header-left"><h2>{c.name}</h2><p>{c.city}, {c.country}</p></div></div>
+        <div className="section-title">{t("contactDetails")}</div>
+        <div className="table-wrap" style={{padding:16,marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid var(--border)"}}><span className="stat-label">{t("email")}</span><span>{c.email}</span></div>
+          <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0"}}><span className="stat-label">{t("phone")}</span><span>{c.phone}</span></div>
+        </div>
+        <div className="section-title">{t("bottleOrders")}</div>
+        <div className="table-wrap">{btx.length===0?<div className="empty">{t("noTransactions")}</div>:btx.map(tx=>{const {cls,icon}=txIcon(tx.type);return(
+          <div className="tx-item" key={tx.id}><div className={`tx-icon ${cls}`}>{icon}</div><div className="tx-info"><div className="tx-title">{tx.wine}</div><div className="tx-meta">{tx.batch} · {tx.date}</div></div>{tx.qty!==0&&<div className={`tx-qty ${tx.qty>0?"pos":"neg"}`}>{tx.qty}</div>}</div>
+        );})}</div>
+        <div className="section-title">{t("bulkPurchases")}</div>
+        <div className="table-wrap">{bul.length===0?<div className="empty">{t("noTransactions")}</div>:bul.map(tx=>(
+          <div className="tx-item" key={tx.id}><div className="tx-icon tx-out">↑</div><div className="tx-info"><div className="tx-title">{tx.wine}</div><div className="tx-meta">{Math.abs(tx.liters).toLocaleString()} {t("litersShort")} · {fmtMoney(Math.abs(tx.liters)*tx.pricePerLiter)} · {tx.date}</div></div></div>
+        ))}</div>
+        <div className="section-title">{t("invoiceList")}</div>
+        <div className="table-wrap">{invs.length===0?<div className="empty">{t("noInvoices")}</div>:invs.map(i=>(
+          <div className="tx-item" key={i.id}><div className="tx-info"><div className="tx-title">{i.id}</div><div className="tx-meta">{fmtMoney(i.qty*i.unitPrice)} · {i.status}</div></div></div>
+        ))}</div>
+      </>
+    );
+  }
+  if(view==="type"&&seg){
+    const td=typeData.find(x=>x.ty===seg); const ranked=[...td.cs].sort((a,b)=>b.totalBottles-a.totalBottles);
+    return (
+      <>
+        <button className="profile-back" onClick={()=>{setView("top");setSeg(null);}}>{t("backToOverview")}</button>
+        <div className="page-header"><div className="page-header-left"><h2>{seg}</h2><p>{t("clientsInSegment")}</p></div></div>
+        <div className="stats-grid-3">
+          <div className="stat-card"><div className="stat-label">{t("combinedRevenue")}</div><div className="stat-value" style={{fontSize:"1.4rem"}}>{fmtMoney(td.rev)}</div></div>
+          <div className="stat-card green"><div className="stat-label">{t("totalBottlesShipped")}</div><div className="stat-value">{td.btl.toLocaleString()}</div></div>
+          <div className="stat-card gold"><div className="stat-label">{t("bulkLitres")}</div><div className="stat-value">{td.bl.toLocaleString()}</div></div>
+        </div>
+        <div className="table-wrap">
+          <table><thead><tr><th>{t("client")}</th><th>{t("country")}</th><th>{t("shipped")}</th><th>{t("revenue")}</th></tr></thead>
+            <tbody>{ranked.map(c=>{
+              const r=clientInvoiceTotal(c.id,invoices)+clientBulkTotal(c.id,bulkTransactions);
+              return <tr key={c.id} className="clickable" onClick={()=>{setSelClient(c);setView("client");setClientFrom("segment");}}><td>{c.name}</td><td>{c.country}</td><td>{c.totalBottles.toLocaleString()}</td><td>{fmtMoney(r)}</td></tr>;
+            })}</tbody></table>
+        </div>
+      </>
+    );
+  }
+  return (
+    <>
+      <div className="page-header"><div className="page-header-left"><h2>{t("salesByType")}</h2><p>{t("salesByTypeSub")}</p></div></div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:28}}>
+        {typeData.map(d=>(
+          <div key={d.ty} className="stat-card" style={{cursor:"pointer"}} onClick={()=>{setSeg(d.ty);setView("type");}}>
+            <div className="stat-label">{d.ty}</div>
+            <div className="stat-value" style={{fontSize:"1.25rem"}}>{fmtMoney(d.rev)}</div>
+            <div className="stat-sub">{d.btl.toLocaleString()} {t("bottles").toLowerCase()} · {d.bl.toLocaleString()} {t("litersShort")}</div>
+            <div style={{marginTop:10,height:6,background:"var(--border)",borderRadius:3,overflow:"hidden"}}><div style={{height:"100%",width:`${(d.rev/totalRev)*100}%`,background:"var(--gold)",minWidth:4}}/></div>
+          </div>
+        ))}
+      </div>
+      <div className="section-title">{t("rankByRevenue")}</div>
+      <div className="table-wrap">
+        <table><thead><tr><th>#</th><th>{t("client")}</th><th>{t("type")}</th><th>{t("revenue")}</th></tr></thead>
+          <tbody>{clientRows.map((row,i)=>(
+            <tr key={row.c.id} className="clickable" onClick={()=>{setSelClient(row.c);setView("client");setClientFrom("top");}}><td>{i+1}</td><td>{row.c.name}</td><td><span className={`badge ${clientTypeColor(row.c.type)}`}>{row.c.type}</span></td><td>{fmtMoney(row.rev)}</td></tr>
+          ))}</tbody></table>
+      </div>
+    </>
+  );
+}
+
+// ── Agents ─────────────────────────────────────────────────────────────────────
+function AddAgentModal({ onClose, onSave, t }) {
+  const [form,setForm]=useState({name:"",company:"",region:"",country:"",type:"Regional Broker",commissionPct:8,contact:"",phone:"",notes:""});
+  const set=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const types=[[t("agentTypeRegional"),"Regional Broker"],[t("agentTypeImport"),"Import Broker"],[t("agentTypeExport"),"Export Agent"],[t("agentTypeDistributor"),"Distributor Agent"]];
+  const save=()=>{if(!form.name)return;onSave({...form,id:`AGT-${String(Date.now()).slice(-6)}`,status:"Active",since:new Date().toISOString().slice(0,10),commissionPct:parseFloat(form.commissionPct)||0});onClose();};
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal">
+        <h3>{t("newAgent")}</h3>
+        <div className="form-row"><div className="form-group"><label>{t("agentNameLabel")}</label><input value={form.name} onChange={e=>set("name",e.target.value)}/></div><div className="form-group"><label>{t("company")}</label><input value={form.company} onChange={e=>set("company",e.target.value)}/></div></div>
+        <div className="form-row"><div className="form-group"><label>{t("region")}</label><input value={form.region} onChange={e=>set("region",e.target.value)}/></div><div className="form-group"><label>{t("country")}</label><input value={form.country} onChange={e=>set("country",e.target.value)}/></div></div>
+        <div className="form-group"><label>{t("type")}</label><select value={form.type} onChange={e=>set("type",e.target.value)}>{types.map(([lab,val])=><option key={val} value={val}>{lab}</option>)}</select></div>
+        <div className="form-row"><div className="form-group"><label>{t("commissionPct")}</label><input type="number" value={form.commissionPct} onChange={e=>set("commissionPct",e.target.value)}/></div><div className="form-group"><label>{t("email")}</label><input value={form.contact} onChange={e=>set("contact",e.target.value)}/></div></div>
+        <div className="form-group"><label>{t("phone")}</label><input value={form.phone} onChange={e=>set("phone",e.target.value)}/></div>
+        <div className="form-group"><label>{t("notes")}</label><textarea value={form.notes} onChange={e=>set("notes",e.target.value)}/></div>
+        <div className="modal-actions"><button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button><button className="btn btn-gold" onClick={save}>{t("saveAgent")}</button></div>
+      </div>
+    </div>
+  );
+}
+
+function AgentProfile({ agent, deals, onBack, t }) {
+  const agentDeals=deals.filter(d=>d.agentId===agent.id);
+  const rev=agentDeals.reduce((s,d)=>s+d.qty*d.unitPrice,0);
+  const comm=agentDeals.reduce((s,d)=>s+d.qty*d.unitPrice*(d.commission/100),0);
+  return (
+    <>
+      <button className="profile-back" onClick={onBack}>{t("back")}</button>
+      <div className="page-header"><div className="page-header-left"><h2>{agent.name}</h2><p>{agent.company} · {agent.region}, {agent.country}</p></div><span className={`badge ${agent.status==="Active"?"badge-active":"badge-inactive"}`}>{agent.status}</span></div>
+      <div className="stats-grid-2">
+        <div className="stat-card"><div className="stat-label">{t("revenue")}</div><div className="stat-value" style={{fontSize:"1.4rem"}}>{fmtMoney(rev)}</div></div>
+        <div className="stat-card gold"><div className="stat-label">{t("commissionBreakdown")}</div><div className="stat-value" style={{fontSize:"1.4rem"}}>{fmtMoney(comm)}</div></div>
+      </div>
+      <div className="section-title">{t("contactDetails")}</div>
+      <div className="table-wrap" style={{padding:16,marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid var(--border)"}}><span>{t("email")}</span><span>{agent.contact}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0"}}><span>{t("phone")}</span><span>{agent.phone}</span></div>
+        <div style={{display:"flex",justifyContent:"space-between",padding:"6px 0"}}><span>{t("since")}</span><span>{agent.since}</span></div>
+      </div>
+      {agent.notes&&<div className="info-box" style={{marginBottom:20}}>{agent.notes}</div>}
+      <div className="section-title">{t("dealHistory")}</div>
+      <div className="table-wrap">
+        <table><thead><tr><th>ID</th><th>{t("wine")}</th><th>{t("type")}</th><th>{t("qty")}</th><th>{t("revenue")}</th><th>{t("status")}</th></tr></thead>
+          <tbody>{agentDeals.map(d=>{
+            const st=d.status==="Completed"?t("dealStatusCompleted"):d.status==="In Progress"?t("dealStatusProgress"):t("dealStatusPending");
+            return <tr key={d.id}><td style={{fontFamily:"var(--font-mono)",fontSize:".7rem"}}>{d.id}</td><td>{d.wine}</td><td>{d.type==="Bottles"?t("bottlesDeal"):t("bulkDeal")}</td><td>{d.qty.toLocaleString()}</td><td>{fmtMoney(d.qty*d.unitPrice)}</td><td><span className={`badge ${dealStatusColor(d.status)}`}>{st}</span></td></tr>;
+          })}</tbody></table>
+      </div>
+    </>
+  );
+}
+
+function Agents({ agents, agentDeals, t, onAdd, selected, setSelected }) {
+  const active=agents.filter(a=>a.status==="Active").length;
+  const rev=agentDeals.reduce((s,d)=>s+d.qty*d.unitPrice,0);
+  const comm=agentDeals.reduce((s,d)=>s+d.qty*d.unitPrice*(d.commission/100),0);
+  const actDeals=agentDeals.filter(d=>d.status==="In Progress"||d.status==="Pending").length;
+  if(selected) return <AgentProfile agent={selected} deals={agentDeals} onBack={()=>setSelected(null)} t={t}/>;
+  return (
+    <>
+      <div className="page-header"><div className="page-header-left"><h2>{t("agents")}</h2><p>{t("agentsSub")}</p></div><button className="btn btn-gold" onClick={onAdd}>{t("addAgent")}</button></div>
+      <div className="stats-grid">
+        <div className="stat-card green"><div className="stat-label">{t("activeAgents")}</div><div className="stat-value">{active}</div><div className="stat-sub">{agents.length} {t("totalAccountsStat").toLowerCase()}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("revenueViaAgents")}</div><div className="stat-value" style={{fontSize:"1.35rem"}}>{fmtMoney(rev)}</div></div>
+        <div className="stat-card gold"><div className="stat-label">{t("commissionOwed")}</div><div className="stat-value" style={{fontSize:"1.35rem"}}>{fmtMoney(comm)}</div></div>
+        <div className="stat-card"><div className="stat-label">{t("activeDealsCount")}</div><div className="stat-value">{actDeals}</div></div>
+      </div>
+      <div className="clients-grid">
+        {agents.map(a=>{
+          const ds=agentDeals.filter(d=>d.agentId===a.id); const ar=ds.reduce((s,d)=>s+d.qty*d.unitPrice,0);
+          return (
+            <div className="client-card" key={a.id} onClick={()=>setSelected(a)}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div><div className="client-name">{a.name}</div><div className="client-country">{a.company}</div></div>
+                <span className={`badge ${a.status==="Active"?"badge-active":"badge-inactive"}`}>{a.status}</span>
+              </div>
+              <div style={{marginTop:8,fontSize:".85rem",color:"var(--muted)"}}>{a.region}, {a.country}</div>
+              <div style={{marginTop:8}}><span className="badge badge-restaurant">{a.type}</span> <span style={{fontFamily:"var(--font-mono)",fontSize:".75rem"}}>{a.commissionPct}%</span></div>
+              <div className="client-stats">
+                <div className="client-stat"><div className="client-stat-label">{t("revenue")}</div><div className="client-stat-value">{fmtMoney(ar)}</div></div>
+                <div className="client-stat"><div className="client-stat-label">{t("deals")}</div><div className="client-stat-value">{ds.length}</div></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 // ── localStorage helpers ──────────────────────────────────────────────────────
 const STORAGE_KEYS = {
   demo: "cantina-track-demo",
@@ -1398,7 +1733,7 @@ const STORAGE_KEYS = {
   lang: "cantina-track-lang"
 };
 
-const EMPTY_DATA = { batches: [], transactions: [], clients: [], invoices: [], harvests: [] };
+const EMPTY_DATA = { batches: [], transactions: [], clients: [], invoices: [], harvests: [], bulkStock: [], bulkTransactions: [], agents: [], agentDeals: [] };
 
 function loadMode() {
   try { return localStorage.getItem(STORAGE_KEYS.mode) || "demo"; }
@@ -1440,7 +1775,10 @@ function saveData(mode, data) {
 
 function getDefaults(mode) {
   if (mode === "blank") return EMPTY_DATA;
-  return { batches: SEED_BATCHES, transactions: SEED_TRANSACTIONS, clients: SEED_CLIENTS, invoices: SEED_INVOICES, harvests: SEED_HARVESTS };
+  return {
+    batches: SEED_BATCHES, transactions: SEED_TRANSACTIONS, clients: SEED_CLIENTS, invoices: SEED_INVOICES, harvests: SEED_HARVESTS,
+    bulkStock: SEED_BULK, bulkTransactions: SEED_BULK_TRANSACTIONS, agents: SEED_AGENTS, agentDeals: SEED_AGENT_DEALS,
+  };
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
@@ -1454,22 +1792,31 @@ export default function App() {
   const [clients,setClients]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.clients || d.clients; });
   const [invoices,setInvoices]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.invoices || d.invoices; });
   const [harvests,setHarvests]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.harvests || d.harvests; });
+  const [bulkStock,setBulkStock]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.bulkStock ?? d.bulkStock; });
+  const [bulkTransactions,setBulkTransactions]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.bulkTransactions ?? d.bulkTransactions; });
+  const [agents,setAgents]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.agents ?? d.agents; });
+  const [agentDeals,setAgentDeals]=useState(()=>{ const s=loadData(mode); const d=getDefaults(mode); return s?.agentDeals ?? d.agentDeals; });
   const [showAddBatch,setShowAddBatch]=useState(false);
   const [showAddClient,setShowAddClient]=useState(false);
   const [showAddHarvest,setShowAddHarvest]=useState(false);
+  const [showAddBulk,setShowAddBulk]=useState(false);
+  const [shipBulkLot,setShipBulkLot]=useState(null);
+  const [showAddAgent,setShowAddAgent]=useState(false);
+  const [showBulkHistory,setShowBulkHistory]=useState(false);
+  const [selectedAgent,setSelectedAgent]=useState(null);
   const [txBatch,setTxBatch]=useState(null);
   const [selectedClient,setSelectedClient]=useState(null);
   const [viewInvoice,setViewInvoice]=useState(null);
 
   // Save to localStorage whenever data changes
   useEffect(() => {
-    saveData(mode, { batches, transactions, clients, invoices, harvests });
-  }, [batches, transactions, clients, invoices, harvests, mode]);
+    saveData(mode, { batches, transactions, clients, invoices, harvests, bulkStock, bulkTransactions, agents, agentDeals });
+  }, [batches, transactions, clients, invoices, harvests, bulkStock, bulkTransactions, agents, agentDeals, mode]);
 
   const switchMode = (newMode) => {
     if (newMode === mode) return;
     // Save current data before switching
-    saveData(mode, { batches, transactions, clients, invoices, harvests });
+    saveData(mode, { batches, transactions, clients, invoices, harvests, bulkStock, bulkTransactions, agents, agentDeals });
     // Switch
     saveMode(newMode);
     setMode(newMode);
@@ -1480,8 +1827,13 @@ export default function App() {
     setClients(saved?.clients || defaults.clients);
     setInvoices(saved?.invoices || defaults.invoices);
     setHarvests(saved?.harvests || defaults.harvests);
+    setBulkStock(saved?.bulkStock ?? defaults.bulkStock);
+    setBulkTransactions(saved?.bulkTransactions ?? defaults.bulkTransactions);
+    setAgents(saved?.agents ?? defaults.agents);
+    setAgentDeals(saved?.agentDeals ?? defaults.agentDeals);
     setPage("dashboard");
     setSelectedClient(null);
+    setSelectedAgent(null);
   };
 
   const resetCurrentMode = () => {
@@ -1494,10 +1846,19 @@ export default function App() {
       setClients(defaults.clients);
       setInvoices(defaults.invoices);
       setHarvests(defaults.harvests);
+      setBulkStock(defaults.bulkStock);
+      setBulkTransactions(defaults.bulkTransactions);
+      setAgents(defaults.agents);
+      setAgentDeals(defaults.agentDeals);
     }
   };
 
-  const goTo=(p)=>{setPage(p);setSelectedClient(null);};
+  const goTo=(p)=>{setPage(p);setSelectedClient(null);setSelectedAgent(null);};
+
+  const handleShipBulk=(lot,client,liters,note)=>{
+    setBulkStock(prev=>prev.map(b=>b.id===lot.id?{...b,liters:b.liters-liters,status:b.liters-liters<=0&&b.status==="Available"?"Available":b.status}:b));
+    setBulkTransactions(prev=>[{id:Date.now(),bulkId:lot.id,wine:lot.wine,liters:-Math.abs(liters),clientId:client.id,clientName:client.name,date:new Date().toISOString().slice(0,10),note:note||"",pricePerLiter:lot.pricePerLiter,vessel:lot.vessel},...prev]);
+  };
 
   const addTransaction=(tx,clientId,qty,invoice)=>{
     setTransactions(p=>[tx,...p]);
@@ -1511,9 +1872,12 @@ export default function App() {
   const nav=[
     {section:null,id:"dashboard",icon:"◈",label:t("dashboard")},
     {section:t("inventory"),id:"inventory",icon:"⊟",label:t("batches")},
+    {section:null,id:"bulkWine",icon:"🛢",label:t("bulkWine")},
     {section:null,id:"transactions",icon:"⇄",label:t("transactions")},
     {section:null,id:"harvest",icon:"🍇",label:t("harvestLog")},
     {section:t("clientsSection"),id:"clients",icon:"◉",label:t("allClients")},
+    {section:null,id:"agents",icon:"🤝",label:t("agents")},
+    {section:null,id:"salesByType",icon:"◑",label:t("salesByType")},
     {section:null,id:"reminders",icon:"⏰",label:t("reminders"),badge:overdueReminders>0?overdueReminders:null},
     {section:t("finance"),id:"invoices",icon:"◻",label:t("invoices")},
     {section:null,id:"analytics",icon:"◫",label:t("analytics")},
@@ -1554,7 +1918,7 @@ export default function App() {
           </div>
           <div className="sidebar-footer">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span>v0.6.0 · {mode==="demo"?"DEMO":t("myWinery").toUpperCase()}</span>
+              <span>v0.7.0 · {mode==="demo"?"DEMO":t("myWinery").toUpperCase()}</span>
               <button onClick={resetCurrentMode} style={{background:"none",border:"1px solid var(--border)",borderRadius:4,color:"var(--muted)",fontFamily:"var(--font-mono)",fontSize:".55rem",padding:"3px 8px",cursor:"pointer",letterSpacing:".08em"}}>{t("reset")}</button>
             </div>
           </div>
@@ -1564,8 +1928,11 @@ export default function App() {
           {page==="inventory"&&<Inventory batches={batches} onAdd={()=>setShowAddBatch(true)} onTransaction={setTxBatch} t={t}/>}
           {page==="transactions"&&<Transactions transactions={transactions} t={t}/>}
           {page==="harvest"&&<Harvest harvests={harvests} onAdd={()=>setShowAddHarvest(true)} t={t}/>}
+          {page==="bulkWine"&&<BulkWine bulkStock={bulkStock} bulkTransactions={bulkTransactions} clients={clients} t={t} onAdd={()=>setShowAddBulk(true)} onShip={setShipBulkLot} showHistory={showBulkHistory} setShowHistory={setShowBulkHistory}/>}
           {page==="clients"&&!selectedClient&&<Clients clients={clients} transactions={transactions} onAdd={()=>setShowAddClient(true)} onSelect={setSelectedClient} t={t}/>}
           {page==="clients"&&selectedClient&&<ClientProfile client={selectedClient} transactions={transactions} onBack={()=>setSelectedClient(null)} t={t}/>}
+          {page==="agents"&&<Agents agents={agents} agentDeals={agentDeals} t={t} onAdd={()=>setShowAddAgent(true)} selected={selectedAgent} setSelected={setSelectedAgent}/>}
+          {page==="salesByType"&&<SalesByType clients={clients} transactions={transactions} invoices={invoices} bulkTransactions={bulkTransactions} t={t}/>}
           {page==="reminders"&&<Reminders clients={clients} t={t}/>}
           {page==="invoices"&&<Invoices invoices={invoices} clients={clients} onMarkPaid={id=>setInvoices(p=>p.map(i=>i.id===id?{...i,status:"Paid"}:i))} onView={setViewInvoice} t={t}/>}
           {page==="analytics"&&<Analytics batches={batches} transactions={transactions} clients={clients} invoices={invoices} t={t}/>}
@@ -1576,6 +1943,9 @@ export default function App() {
       {showAddHarvest&&<AddHarvestModal onClose={()=>setShowAddHarvest(false)} onSave={h=>{setHarvests(p=>[h,...p]);}} t={t}/>}
       {txBatch&&<LogTransactionModal batch={txBatch} clients={clients} onClose={()=>setTxBatch(null)} onSave={addTransaction} t={t}/>}
       {viewInvoice&&<InvoiceModal invoice={viewInvoice} onClose={()=>setViewInvoice(null)} t={t}/>}
+      {showAddBulk&&<AddBulkModal onClose={()=>setShowAddBulk(false)} onSave={b=>setBulkStock(p=>[b,...p])} t={t}/>}
+      {shipBulkLot&&<ShipBulkModal lot={shipBulkLot} clients={clients} onClose={()=>setShipBulkLot(null)} onSave={handleShipBulk} t={t}/>}
+      {showAddAgent&&<AddAgentModal onClose={()=>setShowAddAgent(false)} onSave={a=>setAgents(p=>[a,...p])} t={t}/>}
     </>
   );
 }
